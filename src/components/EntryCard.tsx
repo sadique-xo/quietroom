@@ -85,13 +85,13 @@ export default function EntryCard({ entry, onClick, isMultiple = false }: EntryC
         />
       </div>
 
-      {/* Caption with enhanced typography and layout */}
+      {/* Reflection content with clean typography */}
       <div className={`space-y-2 sm:space-y-3 ${isMultiple ? 'mb-2 sm:mb-3' : 'mb-3 sm:mb-4'}`}>
-        <blockquote className={`text-secondary leading-relaxed font-medium italic ${
+        <div className={`text-secondary leading-relaxed font-medium ${
           isMultiple ? 'text-xs sm:text-sm' : 'text-sm sm:text-base md:text-lg'
         }`}>
-          &ldquo;{entry.caption}&rdquo;
-        </blockquote>
+          {entry.caption}
+        </div>
         
         {/* Enhanced metadata section */}
         <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-neutral-200">
