@@ -74,6 +74,10 @@ export default function BottomNavigation() {
       >
         {item.name === "Profile" && user?.imageUrl ? (
           <div className="relative w-6 h-6 sm:w-7 sm:h-7">
+            {/* Gradient background for profile photo */}
+            <div className={`absolute inset-0 rounded-full bg-gradient-to-r from-primary to-secondary ${
+              isActive ? 'opacity-100' : 'opacity-0'
+            } transition-opacity duration-200`}></div>
             <Image
               src={user.imageUrl}
               alt="Profile"
@@ -100,13 +104,19 @@ export default function BottomNavigation() {
             />
           </div>
         ) : (
-          <IconComponent 
-            className={`w-6 h-6 sm:w-7 sm:h-7 transition-all duration-200 ${
-              isActive 
-                ? "text-primary stroke-[2.5px]" 
-                : "text-secondary group-hover:text-primary stroke-[2px]"
-            }`}
-          />
+          <div className="relative">
+            {/* Gradient background for icons when active */}
+            {isActive && item.name === "Profile" && (
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary to-secondary opacity-20"></div>
+            )}
+            <IconComponent 
+              className={`w-6 h-6 sm:w-7 sm:h-7 transition-all duration-200 ${
+                isActive 
+                  ? "text-primary stroke-[2.5px]" 
+                  : "text-secondary group-hover:text-primary stroke-[2px]"
+              }`}
+            />
+          </div>
         )}
       </Link>
     );
