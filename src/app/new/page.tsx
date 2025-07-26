@@ -6,6 +6,7 @@ import Image from "next/image";
 import { SupabaseEntryStorage } from "@/lib/supabase-storage";
 import { useUser } from "@clerk/nextjs";
 import { useSupabaseClient } from "@/lib/supabase-auth";
+import { getTodayDateString } from "@/lib/date-utils";
 import { 
   Upload, 
   Camera, 
@@ -42,7 +43,7 @@ export default function NewEntryPage() {
     const checkTodaysEntries = async () => {
       if (!user?.id || isSupabaseLoading) return;
       
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayDateString();
       const count = await SupabaseEntryStorage.getEntriesCountForDate(user.id, today, supabase);
       const reachedLimit = await SupabaseEntryStorage.hasReachedDailyLimit(user.id, today, supabase);
       
@@ -97,7 +98,7 @@ export default function NewEntryPage() {
     setIsLoading(true);
 
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayDateString();
       const result = await SupabaseEntryStorage.saveEntry(user.id, {
         date: today,
         photo_url: '', // Will be set by upload

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { SupabaseEntryStorage, Entry } from "@/lib/supabase-storage";
 import { useUser, useClerk, SignOutButton } from "@clerk/nextjs";
 import { useSupabaseClient } from "@/lib/supabase-auth";
+import { formatDateForStorage } from "@/lib/date-utils";
 import { 
   User, 
   BookOpen, 
@@ -64,8 +65,8 @@ export default function ProfilePage() {
     let checkDate = new Date(today);
     
     // Check if there's an entry for today or yesterday to start the streak
-    const todayString = today.toISOString().split('T')[0];
-    const yesterdayString = new Date(today.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const todayString = formatDateForStorage(today);
+    const yesterdayString = formatDateForStorage(new Date(today.getTime() - 24 * 60 * 60 * 1000));
     
     const hasToday = entriesData.some(e => e.date === todayString);
     const hasYesterday = entriesData.some(e => e.date === yesterdayString);
@@ -92,7 +93,7 @@ export default function ProfilePage() {
     if (!skipConsecutiveCheck) {
       let keepChecking = true;
       while (keepChecking) {
-        const checkDateString = checkDate.toISOString().split('T')[0];
+        const checkDateString = formatDateForStorage(checkDate);
         const hasEntry = entriesData.some(e => e.date === checkDateString);
         
         if (hasEntry) {
