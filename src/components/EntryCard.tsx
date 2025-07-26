@@ -1,6 +1,8 @@
 "use client";
 
-import { Entry } from "@/lib/storage";
+import Image from "next/image";
+import { Entry } from "@/lib/supabase-storage";
+import { Calendar, Clock, Heart, Image as ImageIcon } from "lucide-react";
 
 interface EntryCardProps {
   entry: Entry;
@@ -29,45 +31,56 @@ export default function EntryCard({ entry, onClick }: EntryCardProps) {
 
   return (
     <div 
-      className="glass p-sanctuary-lg cursor-pointer transition-all duration-300 hover:scale-[1.01] hover:shadow-glass-hover group"
+      className="glass p-6 cursor-pointer transition-all duration-300 hover:scale-[1.02] group rounded-3xl shadow-lg hover:shadow-xl"
       onClick={onClick}
     >
       {/* Date Header with floating glass pill */}
-      <div className="flex items-center justify-between mb-sanctuary-md">
-        <div className="glass px-sanctuary-xs py-1 rounded-full">
-          <span className="text-caption text-sanctuary-sage font-medium">
+      <div className="flex items-center justify-between mb-6">
+        <div className="glass px-4 py-2 rounded-full flex items-center space-x-2">
+          <Calendar className="w-4 h-4 text-purple-600" />
+          <span className="text-sm text-slate-600 font-medium">
             {formatDate(entry.date)}
           </span>
         </div>
-        <div className="w-2 h-2 bg-sanctuary-lavender rounded-full opacity-60 group-hover:opacity-100 transition-opacity"></div>
+        <div className="w-3 h-3 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full opacity-60 group-hover:opacity-100 transition-opacity"></div>
       </div>
 
       {/* Photo with proper spacing and rounded corners */}
-      <div className="mb-sanctuary-md">
-        <img 
+      <div className="mb-6 relative group">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <Image 
           src={entry.photo} 
           alt="Entry photo"
-          className="w-full h-64 object-cover rounded-glass transition-transform duration-300 group-hover:scale-[1.01]"
+          width={400}
+          height={256}
+          className="w-full h-64 object-cover rounded-2xl transition-transform duration-300 group-hover:scale-[1.02] shadow-lg"
         />
+        <div className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <ImageIcon className="w-4 h-4 text-slate-600" />
+        </div>
       </div>
 
       {/* Caption with improved typography */}
-      <div className="mb-sanctuary-sm">
-        <p className="text-body-medium text-sanctuary-navy leading-relaxed font-sf-text">
+      <div className="mb-4">
+        <p className="text-lg text-slate-800 leading-relaxed font-medium">
           &ldquo;{entry.caption}&rdquo;
         </p>
       </div>
 
       {/* Timestamp with subtle styling */}
-      <div className="pt-sanctuary-xs border-t border-sanctuary-lavender/20">
-        <span className="text-micro text-sanctuary-sage">
-          {new Date(entry.timestamp).toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit'
-          })}
+      <div className="pt-3 border-t border-purple-200/30 flex items-center justify-between">
+        <span className="text-xs text-slate-500 flex items-center space-x-1">
+          <Clock className="w-3 h-3" />
+          <span>
+            {new Date(entry.timestamp).toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit'
+            })}
+          </span>
         </span>
+        <Heart className="w-4 h-4 text-purple-400 opacity-60 group-hover:opacity-100 transition-opacity" />
       </div>
     </div>
   );
