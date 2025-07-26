@@ -1,0 +1,27 @@
+{
+  "name": "QuietRoom - Digital Sanctuary",
+  "short_name": "QuietRoom",
+  "description": "One sacred photo, one reflection, one silent moment—every day.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E6E6FA",
+  "theme_color": "#E6E6FA",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/images/Icon v3.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/Icon v3.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "productivity", "health"],
+  "lang": "en",
+  "dir": "ltr"
+} 
