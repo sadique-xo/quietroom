@@ -74,10 +74,6 @@ export default function BottomNavigation() {
       >
         {item.name === "Profile" && user?.imageUrl ? (
           <div className="relative w-6 h-6 sm:w-7 sm:h-7">
-            {/* Gradient background for profile photo */}
-            <div className={`absolute inset-0 rounded-full bg-gradient-to-r from-primary to-secondary ${
-              isActive ? 'opacity-100' : 'opacity-0'
-            } transition-opacity duration-200`}></div>
             <Image
               src={user.imageUrl}
               alt="Profile"
@@ -104,19 +100,13 @@ export default function BottomNavigation() {
             />
           </div>
         ) : (
-          <div className="relative">
-            {/* Gradient background for icons when active */}
-            {isActive && item.name === "Profile" && (
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary to-secondary opacity-20"></div>
-            )}
-            <IconComponent 
-              className={`w-6 h-6 sm:w-7 sm:h-7 transition-all duration-200 ${
-                isActive 
-                  ? "text-primary stroke-[2.5px]" 
-                  : "text-secondary group-hover:text-primary stroke-[2px]"
-              }`}
-            />
-          </div>
+          <IconComponent 
+            className={`w-6 h-6 sm:w-7 sm:h-7 transition-all duration-200 ${
+              isActive 
+                ? "text-primary stroke-[2.5px]" 
+                : "text-secondary group-hover:text-primary stroke-[2px]"
+            }`}
+          />
         )}
       </Link>
     );
@@ -124,8 +114,8 @@ export default function BottomNavigation() {
 
   return (
     <>
-      {/* Subtle gradient background */}
-      <div className="fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-accent/10 to-transparent pointer-events-none z-10"></div>
+      {/* Simple background instead of gradient */}
+      <div className="fixed bottom-0 left-0 right-0 h-16 bg-accent/5 pointer-events-none z-10"></div>
       
       <nav className="fixed bottom-0 left-0 right-0 z-navigation">
         {/* Safe area padding for mobile devices */}
@@ -141,29 +131,20 @@ export default function BottomNavigation() {
                 {navigationItems.map(renderNavItem)}
               </div>
 
-              {/* Professional Center Plus Button */}
+              {/* Simplified Plus Button - No Gradients */}
               <Link
                 href="/new"
                 className="absolute left-1/2 transform -translate-x-1/2 -translate-y-2 sm:-translate-y-3 group"
               >
                 <div className="relative">
-                  {/* Subtle outer glow */}
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-accent/30 to-accent/20 opacity-40 scale-110 group-hover:scale-120 group-hover:opacity-50 transition-all duration-300"></div>
-                  
-                  {/* Main button with professional gradient */}
-                  <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-105 group-active:scale-95 transition-all duration-200">
-                    {/* Inner highlight */}
-                    <div className="absolute inset-1 rounded-full bg-gradient-to-t from-transparent to-white/10"></div>
-                    
+                  {/* Simple button without gradients */}
+                  <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 group-active:scale-95 transition-all duration-200">
                     {/* Plus icon */}
                     <Plus 
                       className="w-7 h-7 sm:w-8 sm:h-8 text-black group-hover:rotate-90 transition-transform duration-300" 
                       strokeWidth={2.5}
                     />
                   </div>
-                  
-                  {/* Professional shadow */}
-                  <div className="absolute top-2 left-2 right-2 bottom-0 rounded-full bg-primary/20 blur-md -z-10"></div>
                 </div>
               </Link>
 
