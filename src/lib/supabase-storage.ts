@@ -1,9 +1,15 @@
 import { supabase, DatabaseEntry, CreateEntryData } from './supabase'
+import { uploadImage, deleteImage, ImageUploadResult } from './image-upload'
 
 export interface Entry {
   id: string;
   date: string; // YYYY-MM-DD format
-  photo: string; // base64 encoded image
+  photo: string; // base64 encoded image (legacy)
+  photo_url?: string; // URL to stored image
+  photo_thumbnail_url?: string; // URL to thumbnail
+  photo_filename?: string; // Original filename
+  photo_size?: number; // File size in bytes
+  photo_format?: string; // Image format (jpg, png, webp)
   caption: string;
   timestamp: number;
 }
@@ -30,6 +36,11 @@ export class SupabaseEntryStorage {
         id: dbEntry.id,
         date: dbEntry.date,
         photo: dbEntry.photo,
+        photo_url: dbEntry.photo_url,
+        photo_thumbnail_url: dbEntry.photo_thumbnail_url,
+        photo_filename: dbEntry.photo_filename,
+        photo_size: dbEntry.photo_size,
+        photo_format: dbEntry.photo_format,
         caption: dbEntry.caption,
         timestamp: dbEntry.timestamp,
       }))
@@ -55,11 +66,39 @@ export class SupabaseEntryStorage {
       }
 
       const timestamp = Date.now()
+      
+      // Handle image upload if needed
+      let photo_url: string | undefined;
+      let photo_thumbnail_url: string | undefined;
+      let photo_filename: string | undefined;
+      let photo_size: number | undefined;
+      let photo_format: string | undefined;
+      
+      // If entry has a base64 photo, upload it to storage
+      if (entry.photo && entry.photo.startsWith('data:image')) {
+        const imageUploadResult = await uploadImage(userId, entry.photo);
+        
+        if (!imageUploadResult.success) {
+          console.error('Image upload failed:', imageUploadResult.error);
+          // Continue with base64 as fallback
+        } else {
+          photo_url = imageUploadResult.url;
+          photo_thumbnail_url = imageUploadResult.thumbnailUrl;
+          photo_filename = imageUploadResult.fileName;
+          photo_size = imageUploadResult.fileSize;
+          photo_format = imageUploadResult.fileFormat;
+        }
+      }
 
       const entryData: CreateEntryData = {
         user_id: userId,
         date: entry.date,
-        photo: entry.photo,
+        photo: entry.photo, // Keep base64 for backward compatibility
+        photo_url: photo_url || entry.photo_url,
+        photo_thumbnail_url: photo_thumbnail_url || entry.photo_thumbnail_url,
+        photo_filename: photo_filename || entry.photo_filename,
+        photo_size: photo_size || entry.photo_size,
+        photo_format: photo_format || entry.photo_format,
         caption: entry.caption,
         timestamp,
       }
@@ -90,6 +129,11 @@ export class SupabaseEntryStorage {
         id: data.id,
         date: data.date,
         photo: data.photo,
+        photo_url: data.photo_url,
+        photo_thumbnail_url: data.photo_thumbnail_url,
+        photo_filename: data.photo_filename,
+        photo_size: data.photo_size,
+        photo_format: data.photo_format,
         caption: data.caption,
         timestamp: data.timestamp,
       }
@@ -152,6 +196,11 @@ export class SupabaseEntryStorage {
         id: data.id,
         date: data.date,
         photo: data.photo,
+        photo_url: data.photo_url,
+        photo_thumbnail_url: data.photo_thumbnail_url,
+        photo_filename: data.photo_filename,
+        photo_size: data.photo_size,
+        photo_format: data.photo_format,
         caption: data.caption,
         timestamp: data.timestamp,
       }
@@ -166,6 +215,22 @@ export class SupabaseEntryStorage {
    */
   static async deleteEntry(userId: string, entryId: string): Promise<boolean> {
     try {
+      // First get the entry to check if there's an image to delete
+      const { data: entry, error: getError } = await supabase
+        .from('entries')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('id', entryId)
+        .single();
+        
+      if (getError) {
+        console.error('Error fetching entry before delete:', getError);
+      } else if (entry && entry.photo_url) {
+        // If there's a stored image, delete it
+        await deleteImage(userId, entry.photo_url);
+      }
+      
+      // Now delete the entry
       const { error } = await supabase
         .from('entries')
         .delete()
@@ -202,6 +267,22 @@ export class SupabaseEntryStorage {
    */
   static async clearAllEntries(userId: string): Promise<boolean> {
     try {
+      // First, get all entries to find images to delete
+      const { data: entries, error: getError } = await supabase
+        .from('entries')
+        .select('id, photo_url')
+        .eq('user_id', userId);
+        
+      if (!getError && entries) {
+        // Delete all images from storage
+        for (const entry of entries) {
+          if (entry.photo_url) {
+            await deleteImage(userId, entry.photo_url);
+          }
+        }
+      }
+      
+      // Then delete all entries
       const { error } = await supabase
         .from('entries')
         .delete()

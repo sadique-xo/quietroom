@@ -49,7 +49,7 @@ export default function EntryCard({ entry, onClick }: EntryCardProps) {
       <div className="mb-6 relative group">
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         <Image 
-          src={entry.photo} 
+          src={entry.photo_url || entry.photo} 
           alt="Entry photo"
           width={400}
           height={256}
