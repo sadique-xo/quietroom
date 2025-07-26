@@ -7,6 +7,7 @@ import { SupabaseEntryStorage, Entry } from "@/lib/supabase-storage";
 import { QuoteService, Quote } from "@/lib/quotes";
 import EntryCard from "@/components/EntryCard";
 import { useUser, SignInButton } from "@clerk/nextjs";
+import { useSupabaseClient } from "@/lib/supabase-auth";
 import { 
   Lock, 
   Heart, 
@@ -18,24 +19,48 @@ import {
 
 export default function HomePage() {
   const { user, isLoaded } = useUser();
+  const { supabase, isLoading: isSupabaseLoading } = useSupabaseClient();
   const [entries, setEntries] = useState<Entry[]>([]);
+  const [entriesByDate, setEntriesByDate] = useState<Record<string, Entry[]>>({});
   const [dailyQuote, setDailyQuote] = useState<Quote | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Load entries and daily quote
     const loadData = async () => {
-      if (!user?.id) {
+      if (!user?.id || isSupabaseLoading) {
         setIsLoading(false);
         return;
       }
 
       try {
         const [userEntries] = await Promise.all([
-          SupabaseEntryStorage.getEntries(user.id),
+          SupabaseEntryStorage.getEntries(user.id, supabase),
         ]);
         
+        // Group entries by date
+        const grouped = userEntries.reduce((acc: Record<string, Entry[]>, entry) => {
+          if (!acc[entry.date]) {
+            acc[entry.date] = [];
+          }
+          acc[entry.date].push(entry);
+          return acc;
+        }, {});
+        
+        // Sort entries within each date by entry_order and timestamp
+        Object.keys(grouped).forEach(date => {
+          grouped[date].sort((a, b) => {
+            // If both have entry_order, sort by that first
+            if (a.entry_order && b.entry_order) {
+              return a.entry_order - b.entry_order;
+            }
+            // Otherwise sort by timestamp
+            return a.timestamp - b.timestamp;
+          });
+        });
+        
         setEntries(userEntries);
+        setEntriesByDate(grouped);
         setDailyQuote(QuoteService.getDailyQuote());
         setIsLoading(false);
       } catch (error) {
@@ -44,17 +69,17 @@ export default function HomePage() {
       }
     };
 
-    if (isLoaded) {
+    if (isLoaded && !isSupabaseLoading) {
       loadData();
     }
-  }, [user?.id, isLoaded, user]);
+  }, [user?.id, isLoaded, user, supabase, isSupabaseLoading]);
 
   const handleEntryClick = (entry: Entry) => {
     // Could navigate to entry detail view in the future
     console.log('Entry clicked:', entry);
   };
 
-  if (!isLoaded || isLoading) {
+  if (!isLoaded || isLoading || isSupabaseLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="text-center">
@@ -160,15 +185,54 @@ export default function HomePage() {
             </div>
           </div>
           
-          {entries.length > 0 ? (
-            <div className="space-y-6">
-              {entries.map((entry) => (
-                <EntryCard 
-                  key={entry.id} 
-                  entry={entry} 
-                  onClick={() => handleEntryClick(entry)}
-                />
-              ))}
+          {Object.keys(entriesByDate).length > 0 ? (
+            <div className="space-y-8">
+              {Object.entries(entriesByDate)
+                .sort(([dateA], [dateB]) => dateB.localeCompare(dateA)) // Sort dates descending
+                .map(([date, dateEntries]) => (
+                  <div key={date} className="space-y-4">
+                    {/* Date Header */}
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+                        <Calendar className="w-4 h-4 text-purple-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-800">
+                          {new Date(date).toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })}
+                        </h3>
+                        <p className="text-sm text-slate-500">
+                          {dateEntries.length} {dateEntries.length === 1 ? 'entry' : 'entries'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Entries Grid for Multiple Photos */}
+                    <div className={dateEntries.length > 1 
+                      ? "grid grid-cols-1 md:grid-cols-2 gap-4" 
+                      : "space-y-4"
+                    }>
+                      {dateEntries.map((entry, index) => (
+                        <div key={entry.id} className="relative">
+                          {dateEntries.length > 1 && (
+                            <div className="absolute top-3 left-3 z-10 w-6 h-6 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center shadow-lg">
+                              {index + 1}
+                            </div>
+                          )}
+                          <EntryCard 
+                            entry={entry} 
+                            onClick={() => handleEntryClick(entry)}
+                            isMultiple={dateEntries.length > 1}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
             </div>
           ) : (
             /* Empty State with generous spacing */

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { SupabaseEntryStorage, Entry } from "@/lib/supabase-storage";
 import { useUser, useClerk, SignOutButton } from "@clerk/nextjs";
+import { useSupabaseClient } from "@/lib/supabase-auth";
 import { 
   User, 
   BookOpen, 
@@ -22,6 +23,7 @@ import {
 export default function ProfilePage() {
   const { user, isLoaded } = useUser();
   const clerk = useClerk();
+  const { supabase, isLoading: isSupabaseLoading } = useSupabaseClient();
   const [, setEntries] = useState<Entry[]>([]);
   const [stats, setStats] = useState({
     totalEntries: 0,
@@ -32,17 +34,17 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const loadEntries = async () => {
-      if (!user?.id) return;
+      if (!user?.id || isSupabaseLoading) return;
       
-      const loadedEntries = await SupabaseEntryStorage.getEntries(user.id);
+      const loadedEntries = await SupabaseEntryStorage.getEntries(user.id, supabase);
       setEntries(loadedEntries);
       calculateStats(loadedEntries);
     };
 
-    if (isLoaded && user) {
+    if (isLoaded && user && !isSupabaseLoading) {
       loadEntries();
     }
-  }, [user?.id, isLoaded, user]);
+  }, [user?.id, isLoaded, user, supabase, isSupabaseLoading]);
 
   const calculateStats = (entriesData: Entry[]) => {
     if (entriesData.length === 0) {
@@ -134,9 +136,9 @@ export default function ProfilePage() {
 
   const handleExportData = async () => {
     try {
-      if (!user?.id) return;
+      if (!user?.id || isSupabaseLoading) return;
       
-      const exportData = await SupabaseEntryStorage.exportEntries(user.id);
+      const exportData = await SupabaseEntryStorage.exportEntries(user.id, supabase);
       const blob = new Blob([exportData], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -170,8 +172,8 @@ export default function ProfilePage() {
       'Are you sure you want to delete all your entries? This action cannot be undone.'
     );
     
-    if (confirmed && user?.id) {
-      const success = await SupabaseEntryStorage.clearAllEntries(user.id);
+    if (confirmed && user?.id && !isSupabaseLoading) {
+      const success = await SupabaseEntryStorage.clearAllEntries(user.id, supabase);
       if (success) {
         setEntries([]);
         setStats({

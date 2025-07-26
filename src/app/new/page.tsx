@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { SupabaseEntryStorage } from "@/lib/supabase-storage";
 import { useUser } from "@clerk/nextjs";
+import { useSupabaseClient } from "@/lib/supabase-auth";
 import Link from "next/link";
 import { 
   X, 
@@ -19,27 +20,42 @@ import {
 
 export default function NewEntryPage() {
   const { user, isLoaded } = useUser();
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const { supabase, isLoading: isSupabaseLoading } = useSupabaseClient();
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [selectedImagePreview, setSelectedImagePreview] = useState<string | null>(null);
+
+  // Cleanup preview URL when component unmounts or file changes
+  useEffect(() => {
+    return () => {
+      if (selectedImagePreview && selectedImagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(selectedImagePreview);
+      }
+    };
+  }, [selectedImagePreview]);
   const [caption, setCaption] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [hasEntryToday, setHasEntryToday] = useState(false);
+  const [todayEntriesCount, setTodayEntriesCount] = useState(0);
+  const [hasReachedDailyLimit, setHasReachedDailyLimit] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user already has an entry for today
-    const checkTodaysEntry = async () => {
-      if (!user?.id) return;
+    // Check how many entries user has for today
+    const checkTodaysEntries = async () => {
+      if (!user?.id || isSupabaseLoading) return;
       
       const today = new Date().toISOString().split('T')[0];
-      const hasEntry = await SupabaseEntryStorage.hasEntryForDate(user.id, today);
-      setHasEntryToday(hasEntry);
+      const count = await SupabaseEntryStorage.getEntriesCountForDate(user.id, today, supabase);
+      const reachedLimit = await SupabaseEntryStorage.hasReachedDailyLimit(user.id, today, supabase);
+      
+      setTodayEntriesCount(count);
+      setHasReachedDailyLimit(reachedLimit);
     };
 
-    if (isLoaded && user) {
-      checkTodaysEntry();
+    if (isLoaded && user && !isSupabaseLoading) {
+      checkTodaysEntries();
     }
-  }, [user?.id, isLoaded, user]);
+  }, [user?.id, isLoaded, user, supabase, isSupabaseLoading]);
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -57,16 +73,20 @@ export default function NewEntryPage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setSelectedImage(result);
-    };
-    reader.readAsDataURL(file);
+    // Clean up previous preview URL if it exists
+    if (selectedImagePreview && selectedImagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(selectedImagePreview);
+    }
+
+    setSelectedImageFile(file);
+    
+    // Use URL.createObjectURL for preview - no base64 conversion needed!
+    const previewUrl = URL.createObjectURL(file);
+    setSelectedImagePreview(previewUrl);
   };
 
   const handleSaveEntry = async () => {
-    if (!selectedImage || !caption.trim()) {
+    if (!selectedImageFile || !caption.trim()) {
       alert("Please add both a photo and reflection");
       return;
     }
@@ -82,9 +102,13 @@ export default function NewEntryPage() {
       const today = new Date().toISOString().split('T')[0];
       const result = await SupabaseEntryStorage.saveEntry(user.id, {
         date: today,
-        photo: selectedImage,
+        photo_url: '', // Will be set by upload
+        photo_filename: '', // Will be set by upload  
+        photo_size: 0, // Will be set by upload
+        photo_format: '', // Will be set by upload
         caption: caption.trim(),
-      });
+        imageFile: selectedImageFile,
+      }, supabase);
 
       if (result.success) {
         // Success feedback with gentle animation
@@ -92,10 +116,13 @@ export default function NewEntryPage() {
         successMessage.className = 'fixed top-8 left-1/2 transform -translate-x-1/2 z-50 glass px-6 py-3 text-slate-800 font-medium rounded-2xl shadow-xl flex items-center space-x-2';
         successMessage.innerHTML = `
           <Sparkles className="w-5 h-5 text-purple-600" />
-          <span>${hasEntryToday ? 'Entry updated for today ✨' : 'Entry saved for today ✨'}</span>
+          <span>Entry ${todayEntriesCount + 1} saved for today ✨</span>
         `;
         document.body.appendChild(successMessage);
 
+        // Update the entry count
+        setTodayEntriesCount(prevCount => prevCount + 1);
+        
         setTimeout(() => {
           document.body.removeChild(successMessage);
           router.push('/');
@@ -167,14 +194,14 @@ export default function NewEntryPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              {hasEntryToday ? "Update Today's Entry" : "Create New Entry"}
+              {hasReachedDailyLimit ? "Daily Limit Reached" : "Add New Entry"}
             </h1>
             <p className="text-lg text-slate-600 flex items-center space-x-2">
               <Clock className="w-5 h-5 text-purple-500" />
               <span>
-                {hasEntryToday 
-                  ? "You can update your reflection for today" 
-                  : "Capture one sacred moment from your day"
+                {hasReachedDailyLimit 
+                  ? `You've added ${todayEntriesCount}/10 photos today. Come back tomorrow!` 
+                  : `Entry ${todayEntriesCount + 1} of 10 for today`
                 }
               </span>
             </p>
@@ -194,10 +221,10 @@ export default function NewEntryPage() {
               <h2 className="text-xl font-bold text-slate-800">Upload Photo</h2>
             </div>
             
-            {selectedImage ? (
+            {selectedImagePreview ? (
               <div className="relative">
                 <Image 
-                  src={selectedImage} 
+                  src={selectedImagePreview} 
                   alt="Selected" 
                   width={400}
                   height={256}
@@ -213,18 +240,26 @@ export default function NewEntryPage() {
               </div>
             ) : (
               <div 
-                className="border-2 border-dashed border-purple-300 rounded-3xl p-8 text-center bg-gradient-to-br from-purple-50/50 to-blue-50/50 cursor-pointer transition-all duration-300 hover:bg-gradient-to-br hover:from-purple-50 hover:to-blue-50 hover:scale-[1.02]"
-                onClick={() => fileInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-3xl p-8 text-center transition-all duration-300 ${
+                  hasReachedDailyLimit 
+                    ? 'border-slate-300 bg-slate-50/50 cursor-not-allowed'
+                    : 'border-purple-300 bg-gradient-to-br from-purple-50/50 to-blue-50/50 cursor-pointer hover:bg-gradient-to-br hover:from-purple-50 hover:to-blue-50 hover:scale-[1.02]'
+                }`}
+                onClick={() => !hasReachedDailyLimit && fileInputRef.current?.click()}
               >
                 <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
                   <Upload className="w-10 h-10 text-purple-600" />
                 </div>
                 <p className="text-lg text-slate-600 mb-4 font-medium">
-                  Tap to select your photo
+                  {hasReachedDailyLimit ? "Daily limit reached" : "Tap to select your photo"}
                 </p>
-                <div className="glass-button px-8 py-4 text-lg text-slate-800 font-semibold rounded-2xl hover:scale-105 transition-all duration-300 flex items-center space-x-2">
+                <div className={`px-8 py-4 text-lg font-semibold rounded-2xl transition-all duration-300 flex items-center space-x-2 ${
+                  hasReachedDailyLimit 
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
+                    : 'glass-button text-slate-800 hover:scale-105'
+                }`}>
                   <Camera className="w-5 h-5" />
-                  <span>Choose Photo</span>
+                  <span>{hasReachedDailyLimit ? "Limit Reached" : "Choose Photo"}</span>
                 </div>
               </div>
             )}
@@ -233,6 +268,7 @@ export default function NewEntryPage() {
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              disabled={hasReachedDailyLimit}
               onChange={handleImageSelect}
               className="hidden"
             />
@@ -259,9 +295,9 @@ export default function NewEntryPage() {
               </span>
               <button 
                 onClick={handleSaveEntry}
-                disabled={!selectedImage || !caption.trim() || isLoading}
+                disabled={!selectedImageFile || !caption.trim() || isLoading || hasReachedDailyLimit}
                 className={`glass-button px-8 py-4 text-lg font-semibold rounded-2xl transition-all duration-300 flex items-center space-x-2 ${
-                  !selectedImage || !caption.trim() 
+                  !selectedImageFile || !caption.trim() || hasReachedDailyLimit
                     ? 'text-slate-400 cursor-not-allowed' 
                     : 'text-slate-800 hover:scale-105'
                 } ${isLoading ? 'opacity-50' : ''}`}
@@ -274,7 +310,7 @@ export default function NewEntryPage() {
                 ) : (
                   <>
                     <Save className="w-5 h-5" />
-                    <span>{hasEntryToday ? 'Update Entry' : 'Save Entry'}</span>
+                    <span>Save Entry</span>
                   </>
                 )}
               </button>

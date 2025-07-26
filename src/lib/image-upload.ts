@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export const BUCKETS = {
   JOURNAL_ENTRIES: 'journal-entries',
@@ -24,96 +25,88 @@ export function generateFilePath(userId: string, fileName: string): string {
   const randomString = Math.random().toString(36).substring(2, 8);
   const extension = fileName.split('.').pop()?.toLowerCase() || 'jpg';
   
+  // Ensure we're using the correct user ID format
+  // This should match the 'sub' claim from Clerk's JWT
   return `${userId}/${timestamp}-${randomString}.${extension}`;
 }
 
+// Base64 conversion functions removed - we now only work with File objects
+
 /**
- * Convert a base64 string to a File object
+ * Check if storage is available
  */
-export function base64ToFile(base64String: string, fileName: string): File | null {
+async function isStorageAvailable(client?: SupabaseClient): Promise<boolean> {
   try {
-    // Extract the MIME type and base64 data
-    const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-    
-    if (!matches || matches.length !== 3) {
-      console.error('Invalid base64 string format');
-      return null;
+    const supabaseClient = client || supabase;
+    const { data, error } = await supabaseClient.storage.listBuckets();
+    if (error) {
+      console.error('Storage error:', error);
+      return false;
     }
-    
-    const mimeType = matches[1];
-    const base64Data = matches[2];
-    
-    // Convert base64 to binary
-    const byteCharacters = atob(base64Data);
-    const byteArrays = [];
-    
-    for (let i = 0; i < byteCharacters.length; i += 512) {
-      const slice = byteCharacters.slice(i, i + 512);
-      
-      const byteNumbers = new Array(slice.length);
-      for (let j = 0; j < slice.length; j++) {
-        byteNumbers[j] = slice.charCodeAt(j);
-      }
-      
-      const byteArray = new Uint8Array(byteNumbers);
-      byteArrays.push(byteArray);
-    }
-    
-    return new File(byteArrays, fileName, { type: mimeType });
+    return true;
   } catch (error) {
-    console.error('Error converting base64 to file:', error);
-    return null;
+    console.error('Storage not available:', error);
+    return false;
   }
 }
 
 /**
- * Upload an image to Supabase Storage
+ * Upload an image file to Supabase Storage
  * @param userId - The user ID
- * @param imageData - Can be a base64 string or a File object
+ * @param imageFile - The image File object to upload
  * @param fileName - Optional filename, will be generated if not provided
+ * @param customClient - Optional authenticated Supabase client
  */
 export async function uploadImage(
   userId: string,
-  imageData: string | File,
-  fileName?: string
+  imageFile: File,
+  fileName?: string,
+  customClient?: SupabaseClient
 ): Promise<ImageUploadResult> {
   try {
+    // Use custom client if provided (authenticated), otherwise use default
+    const supabaseClient = customClient || supabase;
+    
+    // Check if storage is available
+    const storageAvailable = await isStorageAvailable(supabaseClient);
+    if (!storageAvailable) {
+      return { 
+        success: false, 
+        error: 'Storage is not available. Please ensure Storage is enabled in your Supabase project.' 
+      };
+    }
+
     // Validate inputs
     if (!userId) {
       return { success: false, error: 'User ID is required' };
     }
     
-    if (!imageData) {
-      return { success: false, error: 'Image data is required' };
+    if (!imageFile || !(imageFile instanceof File)) {
+      return { success: false, error: 'Valid image file is required' };
+    }
+
+    // Validate file type
+    if (!imageFile.type.startsWith('image/')) {
+      return { success: false, error: 'File must be an image' };
     }
     
-    let file: File;
-    let fileFormat: string;
-    
-    // Convert base64 to File if needed
-    if (typeof imageData === 'string' && imageData.startsWith('data:')) {
-      const generatedFileName = fileName || `image-${Date.now()}.jpg`;
-      const convertedFile = base64ToFile(imageData, generatedFileName);
-      
-      if (!convertedFile) {
-        return { success: false, error: 'Failed to convert base64 to file' };
-      }
-      
-      file = convertedFile;
-      fileFormat = file.type.split('/')[1] || 'jpg';
-    } else if (imageData instanceof File) {
-      file = imageData;
-      fileFormat = file.type.split('/')[1] || 'jpg';
-    } else {
-      return { success: false, error: 'Invalid image data format' };
-    }
+    const file = imageFile;
+    const fileFormat = file.type.split('/')[1] || 'jpg';
     
     // Generate a unique path for the file
     const actualFileName = fileName || file.name || `image-${Date.now()}.${fileFormat}`;
     const filePath = generateFilePath(userId, actualFileName);
     
-    // Upload the file to the journal-entries bucket
-    const { data, error } = await supabase.storage
+    console.log('Uploading image:', {
+      userId,
+      filePath,
+      fileSize: file.size,
+      fileType: file.type,
+      usingCustomClient: !!customClient
+    });
+    
+    // Upload the file to the journal-entries bucket using the authenticated client
+    const { data, error } = await supabaseClient.storage
       .from(BUCKETS.JOURNAL_ENTRIES)
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -126,9 +119,15 @@ export async function uploadImage(
     }
     
     // Get the public URL for the uploaded file
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = supabaseClient.storage
       .from(BUCKETS.JOURNAL_ENTRIES)
       .getPublicUrl(filePath);
+    
+    console.log('Image upload successful:', {
+      filePath,
+      publicUrl,
+      fileSize: file.size
+    });
     
     return {
       success: true,
@@ -147,8 +146,10 @@ export async function uploadImage(
 /**
  * Delete an image from Supabase Storage
  */
-export async function deleteImage(userId: string, url: string): Promise<boolean> {
+export async function deleteImage(userId: string, url: string, customClient?: SupabaseClient): Promise<boolean> {
   try {
+    const supabaseClient = customClient || supabase;
+    
     // Extract the file path from the URL
     const baseStorageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BUCKETS.JOURNAL_ENTRIES}/`;
     
@@ -165,8 +166,8 @@ export async function deleteImage(userId: string, url: string): Promise<boolean>
       return false;
     }
     
-    // Delete the file
-    const { error } = await supabase.storage
+    // Delete the file using the authenticated client
+    const { error } = await supabaseClient.storage
       .from(BUCKETS.JOURNAL_ENTRIES)
       .remove([filePath]);
     

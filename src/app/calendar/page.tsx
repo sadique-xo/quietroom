@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { SupabaseEntryStorage, Entry } from "@/lib/supabase-storage";
 import { useUser } from "@clerk/nextjs";
+import { useSupabaseClient } from "@/lib/supabase-auth";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -17,6 +18,7 @@ import {
 
 export default function CalendarPage() {
   const { user, isLoaded } = useUser();
+  const { supabase, isLoading: isSupabaseLoading } = useSupabaseClient();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
@@ -25,16 +27,16 @@ export default function CalendarPage() {
 
   useEffect(() => {
     const loadEntries = async () => {
-      if (!user?.id) return;
+      if (!user?.id || isSupabaseLoading) return;
       
-      const userEntries = await SupabaseEntryStorage.getEntries(user.id);
+      const userEntries = await SupabaseEntryStorage.getEntries(user.id, supabase);
       setEntries(userEntries);
     };
 
-    if (isLoaded && user) {
+    if (isLoaded && user && !isSupabaseLoading) {
       loadEntries();
     }
-  }, [user?.id, isLoaded, user]);
+  }, [user?.id, isLoaded, user, supabase, isSupabaseLoading]);
 
   const getDaysInMonth = () => {
     const year = currentDate.getFullYear();
@@ -86,7 +88,7 @@ export default function CalendarPage() {
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
 
   // Show loading state while checking authentication
-  if (!isLoaded) {
+  if (!isLoaded || isSupabaseLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="text-center">
@@ -221,7 +223,7 @@ export default function CalendarPage() {
             </div>
             <div className="mb-4 relative">
               <Image 
-                src={selectedEntry.photo} 
+                src={selectedEntry.photo_url} 
                 alt="Entry photo"
                 width={400}
                 height={192}

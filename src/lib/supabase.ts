@@ -10,27 +10,29 @@ export interface DatabaseEntry {
   id: string
   user_id: string
   date: string
-  photo: string // Base64 image (legacy field)
-  photo_url?: string // New field for image URL
-  photo_thumbnail_url?: string // New field for thumbnail URL
-  photo_filename?: string // New field for original filename
-  photo_size?: number // New field for file size in bytes
-  photo_format?: string // New field for image format (jpg, png, webp)
+  photo?: string // Base64 image (legacy field) - now optional for backward compatibility
+  photo_url: string // Image URL from bucket storage - now required
+  photo_thumbnail_url?: string // Thumbnail URL
+  photo_filename: string // Original filename - now required
+  photo_size: number // File size in bytes - now required
+  photo_format: string // Image format (jpg, png, webp) - now required
   caption: string
   timestamp: number
   created_at: string
+  entry_order?: number // Order within the day (1-10)
 }
 
 // Type for creating new entries (without generated fields)
 export interface CreateEntryData {
   user_id: string
   date: string
-  photo: string // Keep legacy field for backward compatibility
-  photo_url?: string // New field for image URL
-  photo_thumbnail_url?: string // New field for thumbnail URL
-  photo_filename?: string // New field for original filename
-  photo_size?: number // New field for file size in bytes
-  photo_format?: string // New field for image format
+  photo?: string // Legacy field - optional
+  photo_url: string // Image URL from bucket - required
+  photo_thumbnail_url?: string // Thumbnail URL
+  photo_filename: string // Original filename - required
+  photo_size: number // File size - required
+  photo_format: string // Image format - required
   caption: string
   timestamp: number
+  entry_order?: number // Order of entry within the day (1-10)
 } 
