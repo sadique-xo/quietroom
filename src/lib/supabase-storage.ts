@@ -1,6 +1,7 @@
 import { supabase as defaultSupabase, DatabaseEntry, CreateEntryData } from './supabase'
-import { uploadImage, deleteImage, ImageUploadResult } from './image-upload'
+import { uploadImage, deleteImage } from './image-upload'
 import { SupabaseClient } from '@supabase/supabase-js'
+import { getTodayDateString } from './date-utils'
 
 export interface Entry {
   id: string;
@@ -279,7 +280,7 @@ export class SupabaseEntryStorage {
   static async getTodaysEntry(userId: string, customClient?: SupabaseClient): Promise<Entry | null> {
     const client = customClient || defaultSupabase;
     try {
-      const today = new Date().toISOString().split('T')[0]
+      const today = getTodayDateString()
       
       const { data, error } = await client
         .from('entries')

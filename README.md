@@ -11,6 +11,14 @@ A sacred, minimal digital journal where users upload one photo + reflection per 
 - **Minimal Design**: Clean, glass morphism UI focused on calm
 - **Private & Secure**: Authentication with Clerk
 
+## 🆕 Recent Changes
+
+- **Clerk + Supabase Integration**: Clerk authentication now issues JWTs for secure Supabase access. User IDs are stored as TEXT, and a custom `clerk_user_id()` function extracts the user ID from JWTs for Row Level Security (RLS).
+- **Database & Storage Improvements**: The `entries` table schema is updated for Clerk compatibility. Image uploads use authenticated Supabase clients, and files are stored in user-specific folders within public buckets (`journal-entries`, `thumbnails`).
+- **RLS Security**: RLS policies ensure users can only access their own data, both in the database and storage buckets.
+- **Modern File Handling**: Images are uploaded as files (not base64), and displayed using `URL.createObjectURL()` for performance.
+- **Debugging & Testing**: Enhanced logging and test pages for storage and database integration.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -33,7 +41,7 @@ A sacred, minimal digital journal where users upload one photo + reflection per 
    ```
 
 3. Set up environment variables:
-   - Copy `.env.local.example` to `.env.local`
+   - Copy `env.example` to `.env.local`
    - Create a Clerk account at [clerk.com](https://clerk.com)
    - Add your Clerk API keys to `.env.local`
 
@@ -49,7 +57,7 @@ A sacred, minimal digital journal where users upload one photo + reflection per 
 - **Frontend**: Next.js 15 with App Router
 - **Styling**: Tailwind CSS with custom glass morphism
 - **Authentication**: Clerk
-- **Data Storage**: LocalStorage (MVP), Supabase (planned)
+- **Data Storage**: Supabase PostgreSQL & Storage (active), LocalStorage (legacy/MVP)
 - **Deployment**: Vercel
 
 ## 📱 Deployment
@@ -60,6 +68,19 @@ A sacred, minimal digital journal where users upload one photo + reflection per 
 2. Connect your repository to [Vercel](https://vercel.com)
 3. Add the environment variables from `.env.local`
 4. Deploy!
+
+For detailed deployment instructions, see the [Deployment Guide](./docs/DEPLOYMENT.md).
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the [`docs/`](./docs/) folder:
+
+- **[Production Guide](./docs/PRODUCTION_SUMMARY.md)** - Production readiness and deployment
+- **[Technical Documentation](./docs/design-doc.md)** - Architecture and design details
+- **[Development Tasks](./docs/tasks.md)** - Current development roadmap
+- **[Storage Setup](./docs/STORAGE_FIX_GUIDE.md)** - Supabase storage configuration
+
+See the [Documentation Index](./docs/README.md) for a complete list of available guides.
 
 ## 🤝 Contributing
 

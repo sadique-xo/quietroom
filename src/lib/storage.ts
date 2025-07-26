@@ -1,3 +1,5 @@
+import { getTodayDateString } from '@/lib/date-utils';
+
 export interface Entry {
   id: string;
   date: string; // YYYY-MM-DD format
@@ -24,7 +26,7 @@ export class EntryStorage {
   static saveEntry(entry: Omit<Entry, 'id' | 'timestamp'>): boolean {
     try {
       const entries = this.getEntries();
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayDateString();
       
       // Check if entry already exists for today
       const existingEntryIndex = entries.findIndex(e => e.date === today);
@@ -60,7 +62,7 @@ export class EntryStorage {
   }
 
   static getTodaysEntry(): Entry | null {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayDateString();
     const entries = this.getEntries();
     return entries.find(entry => entry.date === today) || null;
   }

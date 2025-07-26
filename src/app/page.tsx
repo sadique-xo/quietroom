@@ -81,12 +81,12 @@ export default function HomePage() {
 
   if (!isLoaded || isLoading || isSupabaseLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
-        <div className="text-center">
-          <div className="breathing w-16 h-16 rounded-full glass flex items-center justify-center mb-4">
-            <Sparkles className="w-8 h-8 text-purple-500 animate-pulse" />
+      <div className="min-h-dvh flex items-center justify-center">
+        <div className="text-center mobile-container">
+          <div className="breathing w-12 h-12 sm:w-16 sm:h-16 rounded-full nav-glass flex items-center justify-center mb-4 mx-auto">
+            <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-accent animate-pulse" />
           </div>
-          <p className="text-slate-600 font-medium">Loading your sanctuary...</p>
+          <p className="text-sm sm:text-base text-secondary font-medium">Loading your sanctuary...</p>
         </div>
       </div>
     );
@@ -95,24 +95,26 @@ export default function HomePage() {
   // Show sign-in prompt if user is not authenticated
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="glass p-8 rounded-3xl shadow-xl">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-              <Lock className="w-10 h-10 text-purple-600" />
+      <div className="min-h-dvh flex items-center justify-center">
+        <div className="mobile-container tablet-container desktop-container">
+          <div className="text-center max-w-sm mx-auto">
+            <div className="card-modern p-6 sm:p-8 animate-gentle-fade">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-full bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+                <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
+              </div>
+              <h1 className="font-italiana text-xl sm:text-2xl md:text-3xl mb-3 sm:mb-4 text-primary">
+                Welcome to QuietRoom
+              </h1>
+              <p className="text-sm sm:text-base text-secondary mb-6 sm:mb-8 leading-relaxed">
+                Your sacred digital sanctuary for daily reflection and presence.
+              </p>
+              <SignInButton mode="modal">
+                <button className="glass-button px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold w-full rounded-xl hover:scale-[1.02] transition-all duration-200 flex items-center justify-center space-x-2">
+                  <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span>Sign In to Begin</span>
+                </button>
+              </SignInButton>
             </div>
-            <h1 className="text-3xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Welcome to QuietRoom
-            </h1>
-            <p className="text-slate-600 mb-8 leading-relaxed text-lg">
-              Your sacred digital sanctuary for daily reflection and presence.
-            </p>
-            <SignInButton mode="modal">
-              <button className="glass-button px-8 py-4 text-base text-slate-800 font-semibold w-full rounded-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2">
-                <Heart className="w-5 h-5" />
-                <span>Sign In to Begin</span>
-              </button>
-            </SignInButton>
           </div>
         </div>
       </div>
@@ -120,84 +122,88 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
-      {/* Header with Logo */}
-      <div className="pt-8 pb-4 px-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-center">
-          <div className="glass px-6 py-3 rounded-2xl shadow-lg flex items-center space-x-3">
-            <Image
-              src="/images/Icon v3.webp"
-              alt="QuietRoom Icon"
-              width={32}
-              height={32}
-              className="rounded-lg"
-            />
-            <Image
-              src="/images/Website Logo.webp"
-              alt="QuietRoom"
-              width={120}
-              height={24}
-              className="h-6 w-auto"
-            />
-          </div>
+    <div className="min-h-dvh">
+      {/* Floating Header with logo - fixed position and spacing */}
+      <div className="w-full flex justify-center pt-safe-top pt-4 sm:pt-6">
+        <div 
+          className="px-4 sm:px-6 py-3 sm:py-4 rounded-[20px] sm:rounded-[24px] flex items-center space-x-3 sm:space-x-4 animate-gentle-fade nav-glass"
+        >
+          <Image
+            src="/images/Icon v3.webp"
+            alt="QuietRoom Icon"
+            width={36}
+            height={36}
+            className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg"
+            priority
+          />
+          <Image
+            src="/images/Website Logo.webp"
+            alt="QuietRoom"
+            width={140}
+            height={28}
+            className="h-6 sm:h-8 w-auto"
+            priority
+          />
         </div>
       </div>
 
-      {/* Hero Section with Daily Quote - 60% viewport height as per design */}
-      <div className="h-[60vh] flex items-center justify-center px-4 pt-8">
-        <div className="glass p-8 text-center max-w-2xl w-full animate-gentle-fade rounded-3xl shadow-xl">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-            <Sparkles className="w-8 h-8 text-purple-600" />
-          </div>
-          <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-            Welcome to Your Sanctuary
-          </h1>
-          {dailyQuote && (
-            <>
-              <p className="text-xl text-slate-600 mb-4 italic leading-relaxed">
-                &ldquo;{dailyQuote.text}&rdquo;
-              </p>
-              <p className="text-sm text-slate-500 font-medium flex items-center justify-center space-x-2">
-                <BookOpen className="w-4 h-4" />
-                <span>— {dailyQuote.author}</span>
-              </p>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Entry Feed with proper spacing */}
-      <div className="px-4 pb-16">
-        <div className="max-w-4xl mx-auto">
-          {/* Section Header with breathing space */}
-          <div className="flex items-center justify-between mb-12">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-purple-600" />
-              </div>
-              <h2 className="text-3xl font-bold text-slate-800">Your Reflections</h2>
+      {/* Hero Section with mobile-optimized spacing */}
+      <div className="min-h-[40vh] sm:min-h-[50vh] flex items-center justify-center pt-6 sm:pt-10">
+        <div className="mobile-container tablet-container desktop-container">
+          <div className="card-modern p-4 sm:p-6 md:p-8 text-center max-w-lg sm:max-w-2xl w-full mx-auto animate-gentle-fade">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-6 rounded-full bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+              <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
             </div>
-            <div className="glass px-4 py-2 rounded-full">
-              <span className="text-sm text-slate-600 font-medium flex items-center space-x-2">
-                <Calendar className="w-4 h-4" />
+            <h1 className="font-italiana text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-4 sm:mb-6 text-primary">
+              Welcome to Your Sanctuary
+            </h1>
+            {dailyQuote && (
+              <>
+                <p className="text-sm sm:text-base md:text-lg text-secondary mb-3 sm:mb-4 italic leading-relaxed">
+                  &ldquo;{dailyQuote.text}&rdquo;
+                </p>
+                <p className="text-xs sm:text-sm text-secondary font-medium flex items-center justify-center space-x-1 sm:space-x-2">
+                  <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span>— {dailyQuote.author}</span>
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Entry Feed with mobile-optimized layout */}
+      <div className="pb-32">
+        <div className="mobile-container tablet-container desktop-container">
+          {/* Section Header with mobile-first layout */}
+          <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 mb-6 sm:mb-8">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+                <BookOpen className="w-4 h-4 sm:w-6 sm:h-6 text-primary" />
+              </div>
+              <h2 className="font-italiana text-lg sm:text-xl md:text-2xl lg:text-3xl text-primary">Your Reflections</h2>
+            </div>
+            <div className="nav-glass px-3 sm:px-4 py-1.5 sm:py-2 rounded-full self-start sm:self-auto">
+              <span className="text-xs sm:text-sm text-secondary font-medium flex items-center space-x-1 sm:space-x-2">
+                <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>{entries.length} {entries.length === 1 ? 'entry' : 'entries'}</span>
               </span>
             </div>
           </div>
           
           {Object.keys(entriesByDate).length > 0 ? (
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               {Object.entries(entriesByDate)
                 .sort(([dateA], [dateB]) => dateB.localeCompare(dateA)) // Sort dates descending
                 .map(([date, dateEntries]) => (
-                  <div key={date} className="space-y-4">
-                    {/* Date Header */}
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                        <Calendar className="w-4 h-4 text-purple-600" />
+                  <div key={date} className="space-y-4 sm:space-y-6 animate-slide-up">
+                    {/* Mobile-optimized Date Header */}
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-slate-800">
+                        <h3 className="font-italiana text-base sm:text-lg font-semibold text-primary">
                           {new Date(date).toLocaleDateString('en-US', { 
                             weekday: 'long', 
                             year: 'numeric', 
@@ -205,24 +211,19 @@ export default function HomePage() {
                             day: 'numeric' 
                           })}
                         </h3>
-                        <p className="text-sm text-slate-500">
+                        <p className="text-xs sm:text-sm text-secondary">
                           {dateEntries.length} {dateEntries.length === 1 ? 'entry' : 'entries'}
                         </p>
                       </div>
                     </div>
                     
-                    {/* Entries Grid for Multiple Photos */}
+                    {/* Mobile-first Responsive Grid */}
                     <div className={dateEntries.length > 1 
-                      ? "grid grid-cols-1 md:grid-cols-2 gap-4" 
-                      : "space-y-4"
+                      ? "grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6" 
+                      : "space-y-4 sm:space-y-6"
                     }>
-                      {dateEntries.map((entry, index) => (
+                      {dateEntries.map((entry) => (
                         <div key={entry.id} className="relative">
-                          {dateEntries.length > 1 && (
-                            <div className="absolute top-3 left-3 z-10 w-6 h-6 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center shadow-lg">
-                              {index + 1}
-                            </div>
-                          )}
                           <EntryCard 
                             entry={entry} 
                             onClick={() => handleEntryClick(entry)}
@@ -235,33 +236,25 @@ export default function HomePage() {
                 ))}
             </div>
           ) : (
-            /* Empty State with generous spacing */
-            <div className="glass p-12 text-center rounded-3xl shadow-xl">
-              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center breathing">
-                <Plus className="w-12 h-12 text-purple-600" />
+            /* Mobile-optimized Empty State */
+            <div className="card-modern p-6 sm:p-8 md:p-12 text-center animate-gentle-fade">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto mb-4 sm:mb-6 rounded-full bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center breathing">
+                <Plus className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-primary" />
               </div>
-              <h3 className="text-2xl font-bold text-slate-800 mb-3">
+              <h3 className="font-italiana text-lg sm:text-xl md:text-2xl text-primary mb-2 sm:mb-3">
                 Start Your Daily Ritual
               </h3>
-              <p className="text-lg text-slate-600 mb-8 max-w-md mx-auto leading-relaxed">
+              <p className="text-sm sm:text-base md:text-lg text-secondary mb-6 sm:mb-8 max-w-xs sm:max-w-md mx-auto leading-relaxed">
                 Capture one sacred moment, one reflection, every day.
               </p>
-              <Link href="/new" className="glass-button px-8 py-4 text-lg text-slate-800 font-semibold rounded-2xl hover:scale-105 transition-all duration-300 flex items-center space-x-2 mx-auto">
-                <Plus className="w-5 h-5" />
+              <Link href="/new" className="glass-button px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 text-sm sm:text-base md:text-lg font-semibold rounded-xl hover:scale-[1.02] transition-all duration-200 flex items-center space-x-2 mx-auto max-w-fit">
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Create Your First Entry</span>
               </Link>
             </div>
           )}
         </div>
       </div>
-
-      {/* Floating Action Button with proper positioning */}
-      <Link 
-        href="/new"
-        className="fixed bottom-28 right-4 glass-button p-5 rounded-full shadow-xl z-10 group hover:scale-110 transition-all duration-300"
-      >
-        <Plus className="w-7 h-7 text-slate-800" />
-      </Link>
     </div>
   );
 }

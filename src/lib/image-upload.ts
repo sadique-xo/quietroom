@@ -38,7 +38,7 @@ export function generateFilePath(userId: string, fileName: string): string {
 async function isStorageAvailable(client?: SupabaseClient): Promise<boolean> {
   try {
     const supabaseClient = client || supabase;
-    const { data, error } = await supabaseClient.storage.listBuckets();
+    const { error } = await supabaseClient.storage.listBuckets();
     if (error) {
       console.error('Storage error:', error);
       return false;
@@ -106,7 +106,7 @@ export async function uploadImage(
     });
     
     // Upload the file to the journal-entries bucket using the authenticated client
-    const { data, error } = await supabaseClient.storage
+    const { error } = await supabaseClient.storage
       .from(BUCKETS.JOURNAL_ENTRIES)
       .upload(filePath, file, {
         cacheControl: '3600',

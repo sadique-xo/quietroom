@@ -6,9 +6,7 @@ import Image from "next/image";
 import { SupabaseEntryStorage } from "@/lib/supabase-storage";
 import { useUser } from "@clerk/nextjs";
 import { useSupabaseClient } from "@/lib/supabase-auth";
-import Link from "next/link";
 import { 
-  X, 
   Upload, 
   Camera, 
   Edit3, 
@@ -113,10 +111,10 @@ export default function NewEntryPage() {
       if (result.success) {
         // Success feedback with gentle animation
         const successMessage = document.createElement('div');
-        successMessage.className = 'fixed top-8 left-1/2 transform -translate-x-1/2 z-50 glass px-6 py-3 text-slate-800 font-medium rounded-2xl shadow-xl flex items-center space-x-2';
+        successMessage.className = 'fixed top-8 left-1/2 transform -translate-x-1/2 z-50 nav-glass px-6 py-3 text-primary font-medium rounded-xl shadow-xl flex items-center space-x-2';
         successMessage.innerHTML = `
-          <Sparkles className="w-5 h-5 text-purple-600" />
-          <span>Entry ${todayEntriesCount + 1} saved for today ✨</span>
+          <div class="w-5 h-5 text-accent">✨</div>
+          <span>Entry ${todayEntriesCount + 1} saved for today</span>
         `;
         document.body.appendChild(successMessage);
 
@@ -156,83 +154,81 @@ export default function NewEntryPage() {
   // Show loading state while checking authentication
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
-        <div className="text-center">
-          <div className="breathing w-16 h-16 rounded-full glass flex items-center justify-center mb-4">
-            <Sparkles className="w-8 h-8 text-purple-500 animate-pulse" />
+      <div className="min-h-dvh flex items-center justify-center">
+        <div className="text-center mobile-container">
+          <div className="breathing w-12 h-12 sm:w-16 sm:h-16 rounded-full nav-glass flex items-center justify-center mb-4 mx-auto">
+            <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-accent animate-pulse" />
           </div>
-          <p className="text-slate-600 font-medium">Loading...</p>
+          <p className="text-sm sm:text-base text-secondary font-medium">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
-      <div className="mobile-container tablet-container desktop-container pt-8">
-        {/* Header with Logo */}
-        <div className="flex items-center justify-center mb-8">
-          <div className="glass px-6 py-3 flex items-center space-x-3 rounded-2xl shadow-lg">
+    <div className="min-h-dvh">
+      <div className="mobile-container tablet-container desktop-container pt-safe-top pt-6 sm:pt-8">
+        {/* Mobile-optimized Header with logo */}
+        <div className="flex items-center justify-center mb-6 sm:mb-8">
+          <div className="nav-glass px-4 sm:px-6 py-2.5 sm:py-3 flex items-center space-x-2 sm:space-x-3 rounded-[16px] sm:rounded-[20px]">
             <Image
               src="/images/Icon v3.webp"
               alt="QuietRoom Icon"
-              width={24}
-              height={24}
-              className="rounded-lg"
+              width={20}
+              height={20}
+              className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg"
             />
             <Image
               src="/images/Website Logo.webp"
               alt="QuietRoom"
-              width={100}
-              height={20}
-              className="h-5 w-auto"
+              width={80}
+              height={16}
+              className="h-3.5 sm:h-5 w-auto"
             />
           </div>
         </div>
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+        {/* Mobile-first Header */}
+        <div className="flex flex-col space-y-3 sm:flex-row sm:items-start sm:justify-between sm:space-y-0 mb-6 sm:mb-8">
+          <div className="space-y-1 sm:space-y-2">
+            <h1 className="font-italiana text-xl sm:text-2xl md:text-3xl text-primary">
               {hasReachedDailyLimit ? "Daily Limit Reached" : "Add New Entry"}
             </h1>
-            <p className="text-lg text-slate-600 flex items-center space-x-2">
-              <Clock className="w-5 h-5 text-purple-500" />
-              <span>
+            <div className="flex items-start space-x-2">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-secondary/60 mt-0.5" />
+              <p className="text-sm sm:text-base text-secondary leading-relaxed">
                 {hasReachedDailyLimit 
                   ? `You've added ${todayEntriesCount}/10 photos today. Come back tomorrow!` 
                   : `Entry ${todayEntriesCount + 1} of 10 for today`
                 }
-              </span>
-            </p>
+              </p>
+            </div>
           </div>
-          <Link href="/" className="glass-button p-3 rounded-full hover:scale-105 transition-all duration-300">
-            <X className="w-6 h-6 text-slate-800" />
-          </Link>
+
         </div>
 
-        <div className="space-y-6">
-          {/* Photo Upload Section */}
-          <div className="glass p-6 rounded-3xl shadow-xl">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                <Camera className="w-5 h-5 text-purple-600" />
+        <div className="space-y-6 sm:space-y-8 pb-safe-bottom pb-32">
+          {/* Mobile-optimized Photo Upload Section */}
+          <div className="card-modern p-4 sm:p-6 animate-slide-up">
+            <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+                <Camera className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
-              <h2 className="text-xl font-bold text-slate-800">Upload Photo</h2>
+              <h2 className="font-italiana text-lg sm:text-xl text-primary">Upload Photo</h2>
             </div>
             
             {selectedImagePreview ? (
-              <div className="relative">
+              <div className="relative group">
                 <Image 
                   src={selectedImagePreview} 
                   alt="Selected" 
                   width={400}
                   height={256}
-                  className="w-full h-64 object-cover rounded-2xl mb-4 shadow-lg"
+                  className="w-full h-48 sm:h-56 md:h-64 object-cover rounded-[12px] sm:rounded-[16px] mb-4 shadow-sm"
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="glass-button px-6 py-3 text-base text-slate-800 font-semibold rounded-2xl hover:scale-105 transition-all duration-300 flex items-center space-x-2"
+                  className="glass-button px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-semibold rounded-xl hover:scale-[1.02] transition-all duration-200 flex items-center space-x-2"
                 >
                   <Edit3 className="w-4 h-4" />
                   <span>Change Photo</span>
@@ -240,25 +236,25 @@ export default function NewEntryPage() {
               </div>
             ) : (
               <div 
-                className={`border-2 border-dashed rounded-3xl p-8 text-center transition-all duration-300 ${
+                className={`border-2 border-dashed rounded-[16px] sm:rounded-[20px] p-6 sm:p-8 text-center transition-all duration-200 ${
                   hasReachedDailyLimit 
-                    ? 'border-slate-300 bg-slate-50/50 cursor-not-allowed'
-                    : 'border-purple-300 bg-gradient-to-br from-purple-50/50 to-blue-50/50 cursor-pointer hover:bg-gradient-to-br hover:from-purple-50 hover:to-blue-50 hover:scale-[1.02]'
+                    ? 'border-neutral-300 bg-neutral-50/50 cursor-not-allowed'
+                    : 'border-accent/30 bg-gradient-to-br from-accent/5 to-accent/10 cursor-pointer hover:bg-gradient-to-br hover:from-accent/10 hover:to-accent/15 hover:scale-[1.01]'
                 }`}
                 onClick={() => !hasReachedDailyLimit && fileInputRef.current?.click()}
               >
-                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                  <Upload className="w-10 h-10 text-purple-600" />
+                <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 sm:mb-4 rounded-full bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+                  <Upload className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
                 </div>
-                <p className="text-lg text-slate-600 mb-4 font-medium">
+                <p className="text-base sm:text-lg text-secondary mb-3 sm:mb-4 font-medium">
                   {hasReachedDailyLimit ? "Daily limit reached" : "Tap to select your photo"}
                 </p>
-                <div className={`px-8 py-4 text-lg font-semibold rounded-2xl transition-all duration-300 flex items-center space-x-2 ${
+                <div className={`px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-xl transition-all duration-200 flex items-center space-x-2 mx-auto max-w-fit ${
                   hasReachedDailyLimit 
-                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
-                    : 'glass-button text-slate-800 hover:scale-105'
+                    ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed' 
+                    : 'glass-button hover:scale-[1.02]'
                 }`}>
-                  <Camera className="w-5 h-5" />
+                  <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span>{hasReachedDailyLimit ? "Limit Reached" : "Choose Photo"}</span>
                 </div>
               </div>
@@ -274,42 +270,42 @@ export default function NewEntryPage() {
             />
           </div>
 
-          {/* Caption Section */}
-          <div className="glass p-6 rounded-3xl shadow-xl">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                <Heart className="w-5 h-5 text-purple-600" />
+          {/* Mobile-optimized Caption Section */}
+          <div className="card-modern p-4 sm:p-6 animate-slide-up">
+            <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
-              <h2 className="text-xl font-bold text-slate-800">Reflection</h2>
+              <h2 className="font-italiana text-lg sm:text-xl text-primary">Reflection</h2>
             </div>
             <textarea
               value={caption}
               onChange={handleCaptionChange}
-              className="glass-input w-full p-4 text-lg text-slate-800 placeholder-slate-500/70 resize-none rounded-2xl"
+              className="glass-input w-full p-3 sm:p-4 text-base sm:text-lg placeholder-secondary/60 resize-none rounded-xl"
               placeholder="What does this moment mean to you?"
               rows={4}
             />
-            <div className="flex justify-between items-center mt-6">
-              <span className={`text-sm font-medium ${caption.length > 260 ? 'text-red-500' : 'text-slate-500'}`}>
+            <div className="flex flex-col space-y-3 sm:flex-row sm:justify-between sm:items-center sm:space-y-0 mt-4 sm:mt-6">
+              <span className={`text-sm font-medium ${caption.length > 260 ? 'text-red-500' : 'text-secondary'}`}>
                 {caption.length}/280 characters
               </span>
               <button 
                 onClick={handleSaveEntry}
                 disabled={!selectedImageFile || !caption.trim() || isLoading || hasReachedDailyLimit}
-                className={`glass-button px-8 py-4 text-lg font-semibold rounded-2xl transition-all duration-300 flex items-center space-x-2 ${
+                className={`glass-button px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 text-sm sm:text-base md:text-lg font-semibold rounded-xl transition-all duration-200 flex items-center space-x-2 w-full sm:w-auto justify-center ${
                   !selectedImageFile || !caption.trim() || hasReachedDailyLimit
-                    ? 'text-slate-400 cursor-not-allowed' 
-                    : 'text-slate-800 hover:scale-105'
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'hover:scale-[1.02]'
                 } ${isLoading ? 'opacity-50' : ''}`}
               >
                 {isLoading ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-slate-600 border-t-transparent rounded-full animate-spin"></div>
-                    <span>...</span>
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <span>Saving...</span>
                   </>
                 ) : (
                   <>
-                    <Save className="w-5 h-5" />
+                    <Save className="w-4 h-4 sm:w-5 sm:h-5" />
                     <span>Save Entry</span>
                   </>
                 )}

@@ -1,12 +1,37 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
+interface JWTPayload {
+  sub?: string;
+  user_id?: string;
+  role?: string;
+  exp?: number;
+  aud?: string;
+  iss?: string;
+  [key: string]: unknown;
+}
+
+type SupabaseClientExtended = SupabaseClient & {
+  headers?: Record<string, string>;
+  rest?: {
+    headers?: Record<string, string>;
+    url?: string;
+  };
+  auth?: {
+    headers?: Record<string, string>;
+  };
+  global?: {
+    headers?: Record<string, string>;
+  };
+  supabaseKey?: string;
+};
+
 export interface StorageDebugInfo {
   bucketsAccessible: boolean;
   bucketCount: number;
   bucketNames: string[];
   jwt: {
     isValid: boolean;
-    payload?: any;
+    payload?: JWTPayload;
     error?: string;
   };
   userContext: {
@@ -43,24 +68,25 @@ export async function debugStorageAccess(
     // 1. Test JWT token - improved extraction
     let authHeader = '';
     try {
-      // Try multiple ways to get the auth header
-      const clientHeaders = (supabase as any).headers || 
-                          (supabase as any).supabaseKey ? {} : 
-                          ((supabase as any).rest?.headers || 
-                           (supabase as any).auth?.headers || 
-                           (supabase as any).global?.headers || {});
-      
-      authHeader = clientHeaders?.Authorization || 
-                   ((supabase as any).rest?.url && (supabase as any).rest?.headers?.Authorization) ||
-                   '';
-      
-      console.log('Debug - Auth header search results:', {
-        hasHeaders: !!(supabase as any).headers,
-        hasRestHeaders: !!((supabase as any).rest?.headers),
-        hasAuthHeaders: !!((supabase as any).auth?.headers),
-        hasGlobalHeaders: !!((supabase as any).global?.headers),
-        headerFound: !!authHeader
-      });
+          // Try multiple ways to get the auth header
+    const extendedClient = supabase as SupabaseClientExtended;
+    const clientHeaders = extendedClient.headers || 
+                        extendedClient.supabaseKey ? {} : 
+                        (extendedClient.rest?.headers || 
+                         extendedClient.auth?.headers || 
+                         extendedClient.global?.headers || {});
+    
+    authHeader = clientHeaders?.Authorization || 
+                 (extendedClient.rest?.url && extendedClient.rest?.headers?.Authorization) ||
+                 '';
+    
+    console.log('Debug - Auth header search results:', {
+      hasHeaders: !!extendedClient.headers,
+      hasRestHeaders: !!(extendedClient.rest?.headers),
+      hasAuthHeaders: !!(extendedClient.auth?.headers),
+      hasGlobalHeaders: !!(extendedClient.global?.headers),
+      headerFound: !!authHeader
+    });
       
       if (authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
@@ -96,7 +122,7 @@ export async function debugStorageAccess(
               expDate: payload.exp ? new Date(payload.exp * 1000).toLocaleString() : 'No expiry'
             });
           }
-        } catch (e) {
+        } catch {
           result.jwt = {
             isValid: false,
             error: 'Failed to parse JWT token',
@@ -109,7 +135,7 @@ export async function debugStorageAccess(
           error: 'No Authorization header found in client',
         };
       }
-    } catch (e) {
+    } catch {
       result.jwt = {
         isValid: false,
         error: 'Could not access client headers',
@@ -128,9 +154,9 @@ export async function debugStorageAccess(
         result.bucketCount = buckets?.length || 0;
         result.bucketNames = buckets?.map(b => b.name) || [];
       }
-    } catch (e) {
+    } catch {
       result.bucketsAccessible = false;
-      console.error('Bucket listing exception:', e);
+      console.error('Bucket listing exception: Unknown error');
     }
 
     // 3. Test individual bucket access
@@ -148,7 +174,7 @@ export async function debugStorageAccess(
 
       // Test listing files in bucket
       try {
-        const { data: files, error: listError } = await supabase.storage
+        const { error: listError } = await supabase.storage
           .from(bucketName)
           .list('', { limit: 1 });
 
@@ -273,7 +299,7 @@ export function formatStorageDebugInfo(info: StorageDebugInfo): string {
   }
   
   const failedBuckets = Object.entries(info.bucketTests)
-    .filter(([_, test]) => !test.canList && !test.canUpload);
+    .filter(([, test]) => !test.canList && !test.canUpload);
     
   if (failedBuckets.length > 0) {
     lines.push('   3. Check storage.objects policies for failed buckets');

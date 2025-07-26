@@ -10,13 +10,9 @@ import {
   BookOpen, 
   Flame, 
   Trophy, 
-  MessageSquare, 
-  Download, 
   Trash2, 
   LogOut,
   Settings,
-  Bell,
-  Volume2,
   Heart
 } from "lucide-react";
 
@@ -134,38 +130,7 @@ export default function ProfilePage() {
     });
   };
 
-  const handleExportData = async () => {
-    try {
-      if (!user?.id || isSupabaseLoading) return;
-      
-      const exportData = await SupabaseEntryStorage.exportEntries(user.id, supabase);
-      const blob = new Blob([exportData], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `quietroom-entries-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
 
-      // Show success message
-      const successMessage = document.createElement('div');
-      successMessage.className = 'fixed top-8 left-1/2 transform -translate-x-1/2 z-toast glass px-6 py-3 text-slate-800 font-medium rounded-2xl shadow-xl flex items-center space-x-2';
-      successMessage.innerHTML = `
-        <Sparkles className="w-5 h-5 text-purple-600" />
-        <span>Entries exported successfully ✨</span>
-      `;
-      document.body.appendChild(successMessage);
-
-      setTimeout(() => {
-        document.body.removeChild(successMessage);
-      }, 3000);
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('Failed to export data. Please try again.');
-    }
-  };
 
   const handleResetData = async () => {
     const confirmed = window.confirm(
@@ -185,10 +150,10 @@ export default function ProfilePage() {
 
         // Show success message
         const successMessage = document.createElement('div');
-        successMessage.className = 'fixed top-8 left-1/2 transform -translate-x-1/2 z-toast glass px-6 py-3 text-slate-800 font-medium rounded-2xl shadow-xl flex items-center space-x-2';
+        successMessage.className = 'fixed top-8 left-1/2 transform -translate-x-1/2 z-toast nav-glass px-6 py-3 text-primary font-medium rounded-xl shadow-xl flex items-center space-x-2';
         successMessage.innerHTML = `
-          <Sparkles className="w-5 h-5 text-purple-600" />
-          <span>All data cleared ✨</span>
+          <div class="w-5 h-5 text-accent">✨</div>
+          <span>All data cleared</span>
         `;
         document.body.appendChild(successMessage);
 
@@ -202,20 +167,20 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
-      <div className="mobile-container tablet-container desktop-container pt-8">
-        {/* Profile Header */}
-        <div className="glass p-8 mb-8 rounded-3xl shadow-xl">
-          <div className="flex items-center space-x-6">
+    <div className="min-h-screen">
+      <div className="mobile-container tablet-container desktop-container pt-6 sm:pt-8 pb-32">
+        {/* Mobile-optimized Profile Header */}
+        <div className="card-modern p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 md:space-x-6">
             {/* Profile Picture */}
-            <div className="relative">
+            <div className="relative flex-shrink-0">
               {user?.imageUrl ? (
                 <Image
                   src={user.imageUrl}
                   alt="Profile picture"
                   width={80}
                   height={80}
-                  className="w-20 h-20 rounded-full object-cover ring-4 ring-purple-100 shadow-lg"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover ring-4 ring-accent/20 shadow-sm"
                   onError={(e) => {
                     // Fallback to default avatar if image fails to load
                     const target = e.target as HTMLImageElement;
@@ -225,23 +190,23 @@ export default function ProfilePage() {
                   }}
                 />
               ) : null}
-              <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center ring-4 ring-purple-100 shadow-lg ${user?.imageUrl ? 'hidden' : ''}`}>
-                <User className="w-10 h-10 text-purple-600" />
+              <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center ring-4 ring-accent/20 shadow-sm ${user?.imageUrl ? 'hidden' : ''}`}>
+                <User className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
               </div>
             </div>
             
             {/* Profile Info */}
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+            <div className="flex-1 text-center sm:text-left">
+              <h1 className="font-italiana text-xl sm:text-2xl md:text-3xl text-primary mb-1 sm:mb-2">
                 {user?.firstName && user?.lastName 
                   ? `${user.firstName} ${user.lastName}` 
                   : user?.fullName || 'Profile'
                 }
               </h1>
-              <p className="text-lg text-slate-600 mb-2">
+              <p className="text-sm sm:text-base md:text-lg text-secondary mb-1 sm:mb-2">
                 {user?.primaryEmailAddress?.emailAddress || 'Your sanctuary statistics and settings'}
               </p>
-              <p className="text-sm text-slate-500">
+              <p className="text-xs sm:text-sm text-secondary/70">
                 Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { 
                   month: 'long', 
                   year: 'numeric' 
@@ -251,166 +216,127 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="glass p-6 text-center rounded-3xl shadow-xl">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-purple-600" />
+        {/* Improved Stats Overview - Single Row */}
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
+          <div className="card-modern p-3 sm:p-4 md:p-5 text-center hover:scale-[1.02] transition-all duration-200">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 mx-auto mb-3 sm:mb-4 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 flex items-center justify-center shadow-sm">
+              <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-blue-600" />
             </div>
-            <div className="text-2xl text-slate-800 font-bold mb-2">
+            <div className="font-italiana text-xl sm:text-2xl md:text-3xl text-primary mb-1 sm:mb-2 font-bold">
               {stats.totalEntries}
             </div>
-            <p className="text-sm text-slate-600 font-medium">Total Entries</p>
+            <p className="text-xs sm:text-sm text-secondary font-medium">Total Entries</p>
           </div>
-          <div className="glass p-6 text-center rounded-3xl shadow-xl">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-              <Flame className="w-6 h-6 text-purple-600" />
+          
+          <div className="card-modern p-3 sm:p-4 md:p-5 text-center hover:scale-[1.02] transition-all duration-200">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 mx-auto mb-3 sm:mb-4 rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 flex items-center justify-center shadow-sm">
+              <Flame className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-orange-600" />
             </div>
-            <div className="text-2xl text-slate-800 font-bold mb-2">
+            <div className="font-italiana text-xl sm:text-2xl md:text-3xl text-primary mb-1 sm:mb-2 font-bold">
               {stats.currentStreak}
             </div>
-            <p className="text-sm text-slate-600 font-medium">Current Streak</p>
+            <p className="text-xs sm:text-sm text-secondary font-medium">Current Streak</p>
           </div>
-          <div className="glass p-6 text-center rounded-3xl shadow-xl">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-purple-600" />
+          
+          <div className="card-modern p-3 sm:p-4 md:p-5 text-center hover:scale-[1.02] transition-all duration-200">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 mx-auto mb-3 sm:mb-4 rounded-xl bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 flex items-center justify-center shadow-sm">
+              <Trophy className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-yellow-600" />
             </div>
-            <div className="text-2xl text-slate-800 font-bold mb-2">
+            <div className="font-italiana text-xl sm:text-2xl md:text-3xl text-primary mb-1 sm:mb-2 font-bold">
               {stats.longestStreak}
             </div>
-            <p className="text-sm text-slate-600 font-medium">Longest Streak</p>
-          </div>
-          <div className="glass p-6 text-center rounded-3xl shadow-xl">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-              <MessageSquare className="w-6 h-6 text-purple-600" />
-            </div>
-            <div className="text-2xl text-slate-800 font-bold mb-2">
-              {stats.averageWordsPerEntry}
-            </div>
-            <p className="text-sm text-slate-600 font-medium">Avg Words</p>
+            <p className="text-xs sm:text-sm text-secondary font-medium">Longest Streak</p>
           </div>
         </div>
 
-        {/* Profile Management */}
-        <div className="glass p-6 mb-6 rounded-3xl shadow-xl">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-              <User className="w-5 h-5 text-purple-600" />
-            </div>
-            <h2 className="text-xl text-slate-800 font-bold">Profile Management</h2>
-          </div>
-          
-          <div className="space-y-4">
-            <p className="text-slate-600 mb-4">
-              Manage your profile picture, name, and account settings using Clerk's secure profile management.
-            </p>
-            <button 
-              onClick={() => {
-                // Open Clerk's UserProfile modal
-                clerk.openUserProfile();
-              }}
-              className="w-full glass-button p-4 text-lg text-slate-800 font-semibold rounded-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2"
-            >
-              <Settings className="w-5 h-5" />
-              <span>Manage Profile & Security</span>
-            </button>
-          </div>
-        </div>
-
-        {/* App Settings */}
-        <div className="glass p-6 mb-6 rounded-3xl shadow-xl">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-              <Settings className="w-5 h-5 text-purple-600" />
-            </div>
-            <h2 className="text-xl text-slate-800 font-bold">App Settings</h2>
-          </div>
-          
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Bell className="w-5 h-5 text-purple-600" />
-                <span className="text-lg text-slate-700 font-medium">Daily Reminders</span>
+        {/* Merged Account & Profile Management Card */}
+        {user && (
+          <div className="card-modern p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
+            <div className="flex items-center space-x-2 sm:space-x-3 mb-5 sm:mb-6">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500/20 to-blue-600/10 flex items-center justify-center">
+                <User className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
               </div>
-              <div className="w-12 h-6 bg-purple-200 rounded-full relative cursor-pointer">
-                <div className="w-5 h-5 bg-purple-600 rounded-full absolute top-0.5 right-0.5 transition-transform"></div>
-              </div>
+              <h2 className="font-italiana text-lg sm:text-xl md:text-2xl text-primary">Account Settings</h2>
             </div>
             
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Volume2 className="w-5 h-5 text-purple-600" />
-                <span className="text-lg text-slate-700 font-medium">Quiet Room Sounds</span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6 mb-6 sm:mb-8">
+              {/* User Info */}
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="relative flex-shrink-0">
+                  {user?.imageUrl ? (
+                    <Image
+                      src={user.imageUrl}
+                      alt="Profile picture"
+                      width={56}
+                      height={56}
+                      className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover ring-2 ring-accent/20 shadow-sm"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center">
+                      <span className="font-italiana text-lg sm:text-2xl text-purple-600">
+                        {user.firstName?.charAt(0) || user.emailAddresses[0]?.emailAddress.charAt(0) || 'U'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <p className="text-base sm:text-lg text-primary font-semibold">
+                    {user.firstName || 'User'}
+                  </p>
+                  <p className="text-xs sm:text-sm text-secondary">
+                    {user.emailAddresses[0]?.emailAddress}
+                  </p>
+                </div>
               </div>
-              <div className="w-12 h-6 bg-slate-200 rounded-full relative cursor-pointer">
-                <div className="w-5 h-5 bg-slate-400 rounded-full absolute top-0.5 left-0.5 transition-transform"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Export & Reset */}
-        <div className="space-y-4 mb-6">
-          <button 
-            onClick={handleExportData}
-            className="w-full glass-button p-4 text-lg text-slate-800 font-semibold rounded-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2"
-          >
-            <Download className="w-5 h-5" />
-            <span>Export My Data ({stats.totalEntries} {stats.totalEntries === 1 ? 'entry' : 'entries'})</span>
-          </button>
-          
-          <button 
-            onClick={handleResetData}
-            className="w-full glass-button p-4 text-lg text-red-600 font-semibold rounded-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 border-red-200"
-          >
-            <Trash2 className="w-5 h-5" />
-            <span>Reset All Data</span>
-          </button>
-        </div>
-
-        {/* User Info */}
-        {user && (
-          <div className="glass p-6 mb-6 rounded-3xl shadow-xl">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                <User className="w-5 h-5 text-purple-600" />
-              </div>
-              <h2 className="text-xl text-slate-800 font-bold">Account</h2>
-            </div>
-            <div className="flex items-center space-x-4 mb-6">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                <span className="text-2xl text-purple-600 font-bold">
-                  {user.firstName?.charAt(0) || user.emailAddresses[0]?.emailAddress.charAt(0) || 'U'}
-                </span>
-              </div>
-              <div>
-                <p className="text-lg text-slate-800 font-semibold">
-                  {user.firstName || 'User'}
-                </p>
-                <p className="text-sm text-slate-600">
-                  {user.emailAddresses[0]?.emailAddress}
-                </p>
-              </div>
-            </div>
-            <SignOutButton>
-              <button className="w-full glass-button p-4 text-lg text-red-600 font-semibold rounded-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 border-red-200">
-                <LogOut className="w-5 h-5" />
-                <span>Sign Out</span>
+              
+              {/* Manage Profile Button */}
+              <button 
+                onClick={() => clerk.openUserProfile()}
+                className="glass-button px-4 py-2.5 text-sm sm:text-base font-semibold rounded-xl hover:scale-[1.02] transition-all duration-200 flex items-center justify-center space-x-2 sm:whitespace-nowrap"
+              >
+                <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                <span>Edit Profile</span>
               </button>
-            </SignOutButton>
+            </div>
+            
+            {/* Account Description - REMOVED */}
+            
+            {/* Button Group */}
+            <div className="grid grid-cols-1 gap-3 sm:gap-4">
+              {/* Reset Data Button */}
+              <button 
+                onClick={handleResetData}
+                className="glass-button p-3 text-sm sm:text-base text-red-600 font-semibold rounded-xl hover:scale-[1.02] transition-all duration-200 flex items-center justify-center space-x-2 border-red-200"
+              >
+                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
+                <span>Reset All Data</span>
+              </button>
+              
+              {/* Sign Out Button - Now Last */}
+              <SignOutButton>
+                <button className="glass-button p-3 text-sm sm:text-base text-red-600 font-semibold rounded-xl hover:scale-[1.02] transition-all duration-200 flex items-center justify-center space-x-2 border-red-200">
+                  <LogOut className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
+                  <span>Sign Out</span>
+                </button>
+              </SignOutButton>
+            </div>
           </div>
         )}
 
-        {/* App Info */}
-        <div className="mt-8 text-center">
+        {/* Mobile-optimized App Info */}
+        <div className="mt-6 sm:mt-8 text-center">
           <div className="flex items-center justify-center space-x-2 mb-2">
-            <Heart className="w-4 h-4 text-purple-600" />
-            <p className="text-sm text-slate-600 font-medium">
+            <Heart className="w-3 h-3 sm:w-4 sm:h-4 text-accent" />
+            <p className="text-xs sm:text-sm text-secondary font-medium">
               QuietRoom v1.0.0
             </p>
           </div>
-          <p className="text-sm text-slate-500">
-            Made with intention and care
+          <p className="text-xs sm:text-sm text-secondary/70">
+            Made with love by Sadique
           </p>
         </div>
       </div>

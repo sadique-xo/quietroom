@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { SupabaseEntryStorage, Entry } from "@/lib/supabase-storage";
 import { useUser } from "@clerk/nextjs";
 import { useSupabaseClient } from "@/lib/supabase-auth";
@@ -10,18 +9,18 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Calendar as CalendarIcon,
-  Heart,
-  Clock,
-  Image as ImageIcon,
   Sparkles
 } from "lucide-react";
+import { formatDateForStorage } from "@/lib/date-utils";
+import EntryCard from "@/components/EntryCard";
 
 export default function CalendarPage() {
   const { user, isLoaded } = useUser();
   const { supabase, isLoading: isSupabaseLoading } = useSupabaseClient();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
+  const [selectedEntries, setSelectedEntries] = useState<Entry[]>([]);
+  const [selectedDateString, setSelectedDateString] = useState<string>("");
 
   const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -55,13 +54,14 @@ export default function CalendarPage() {
   };
 
   const hasEntryForDate = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
+    const dateString = formatDateForStorage(date);
     return entries.some(entry => entry.date === dateString);
   };
 
-  const getEntryForDate = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
-    return entries.find(entry => entry.date === dateString);
+  const getEntriesForDate = (date: Date) => {
+    const dateString = formatDateForStorage(date);
+    return entries.filter(entry => entry.date === dateString)
+      .sort((a, b) => (a.entry_order || 0) - (b.entry_order || 0));
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
@@ -74,13 +74,16 @@ export default function CalendarPage() {
       }
       return newDate;
     });
-    setSelectedEntry(null);
+    setSelectedEntries([]);
+    setSelectedDateString("");
   };
 
   const handleDateClick = (day: number) => {
     const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    const entry = getEntryForDate(clickedDate);
-    setSelectedEntry(entry || null);
+    const clickedDateString = formatDateForStorage(clickedDate);
+    const dayEntries = getEntriesForDate(clickedDate);
+    setSelectedEntries(dayEntries);
+    setSelectedDateString(clickedDateString);
   };
 
   const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth();
@@ -90,12 +93,12 @@ export default function CalendarPage() {
   // Show loading state while checking authentication
   if (!isLoaded || isSupabaseLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
-        <div className="text-center">
-          <div className="breathing w-16 h-16 rounded-full glass flex items-center justify-center mb-4">
-            <Sparkles className="w-8 h-8 text-purple-500 animate-pulse" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center mobile-container">
+          <div className="breathing w-12 h-12 sm:w-16 sm:h-16 rounded-full nav-glass flex items-center justify-center mb-4 mx-auto">
+            <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-accent animate-pulse" />
           </div>
-          <p className="text-slate-600 font-medium">Loading calendar...</p>
+          <p className="text-sm sm:text-base text-secondary font-medium">Loading calendar...</p>
         </div>
       </div>
     );
@@ -104,19 +107,19 @@ export default function CalendarPage() {
   // Show sign-in prompt if not authenticated
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="glass p-8 rounded-3xl shadow-xl">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-              <CalendarIcon className="w-10 h-10 text-purple-600" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-xs sm:max-w-md mx-auto mobile-container">
+          <div className="card-modern p-6 sm:p-8">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-full bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+              <CalendarIcon className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-800 mb-4">
+            <h1 className="font-italiana text-xl sm:text-2xl text-primary mb-3 sm:mb-4">
               Sign In Required
             </h1>
-            <p className="text-slate-600 mb-6">
+            <p className="text-sm sm:text-base text-secondary mb-6">
               Please sign in to view your calendar
             </p>
-            <Link href="/sign-in" className="glass-button px-6 py-3 text-slate-800 font-semibold rounded-2xl hover:scale-105 transition-all duration-300">
+            <Link href="/sign-in" className="glass-button px-6 py-3 text-sm sm:text-base font-semibold rounded-xl hover:scale-[1.02] transition-all duration-200">
               Sign In
             </Link>
           </div>
@@ -126,53 +129,54 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
-      <div className="mobile-container tablet-container desktop-container pt-8">
-        <div className="mb-8">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-              <CalendarIcon className="w-6 h-6 text-purple-600" />
+    <div className="min-h-screen">
+      <div className="mobile-container tablet-container desktop-container pt-6 sm:pt-8 pb-32">
+        {/* Mobile-optimized Header */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+              <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <h1 className="font-italiana text-2xl sm:text-3xl text-primary">
               Calendar
             </h1>
           </div>
-          <p className="text-lg text-slate-600">
+          <p className="text-sm sm:text-base md:text-lg text-secondary">
             Track your daily reflections
           </p>
         </div>
 
-        {/* Calendar Navigation */}
-        <div className="glass p-6 mb-6 rounded-3xl shadow-xl">
-          <div className="flex items-center justify-between mb-6">
+        {/* Mobile-optimized Calendar Navigation */}
+        <div className="card-modern p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <button 
               onClick={() => navigateMonth('prev')}
-              className="glass-button p-3 rounded-full hover:scale-105 transition-all duration-300"
+              className="glass-button p-2.5 sm:p-3 rounded-full hover:scale-105 transition-all duration-200"
             >
-              <ChevronLeft className="w-5 h-5 text-slate-800" />
+              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <h2 className="text-xl text-slate-800 font-bold">
+            <h2 className="font-italiana text-lg sm:text-xl text-primary">
               {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </h2>
             <button 
               onClick={() => navigateMonth('next')}
-              className="glass-button p-3 rounded-full hover:scale-105 transition-all duration-300"
+              className="glass-button p-2.5 sm:p-3 rounded-full hover:scale-105 transition-all duration-200"
             >
-              <ChevronRight className="w-5 h-5 text-slate-800" />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
 
-          {/* Days of Week Header */}
-          <div className="grid grid-cols-7 gap-2 mb-4">
+          {/* Mobile-optimized Days of Week Header */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-3 sm:mb-4">
             {daysOfWeek.map((day) => (
-              <div key={day} className="text-center text-sm text-slate-600 font-semibold py-2">
+              <div key={day} className="text-center text-xs sm:text-sm text-secondary font-semibold py-2">
                 {day}
               </div>
             ))}
           </div>
 
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-2">
+          {/* Mobile-optimized Calendar Grid */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
             {/* Empty cells for days before month starts */}
             {Array.from({ length: startingDayOfWeek }, (_, i) => (
               <div key={`empty-${i}`} className="aspect-square"></div>
@@ -182,89 +186,78 @@ export default function CalendarPage() {
             {Array.from({ length: daysInMonth }, (_, i) => {
               const day = i + 1;
               const date = new Date(year, month, day);
+              const dateString = formatDateForStorage(date);
               const hasEntry = hasEntryForDate(date);
               const isToday = isCurrentMonth && today.getDate() === day;
+              const isSelected = selectedDateString === dateString;
               
               return (
                 <button
                   key={day}
                   onClick={() => handleDateClick(day)}
-                  className={`aspect-square glass-button text-base font-medium relative rounded-2xl transition-all duration-300 hover:scale-105 ${
-                    isToday 
-                      ? 'bg-gradient-to-r from-purple-100/50 to-blue-100/50 text-purple-600 font-bold border-2 border-purple-300' 
-                      : hasEntry 
-                        ? 'bg-gradient-to-r from-purple-50/50 to-blue-50/50 text-slate-800 font-semibold' 
-                        : 'text-slate-600 hover:bg-white/20'
+                  className={`aspect-square text-sm sm:text-base font-medium rounded-xl transition-all duration-200 hover:scale-105 flex items-center justify-center min-h-[44px] ${
+                    isSelected
+                      ? 'bg-black text-white font-bold'
+                      : isToday 
+                        ? 'bg-gradient-to-r from-accent/30 to-accent/20 text-primary font-bold border-2 border-accent/40' 
+                        : hasEntry 
+                          ? 'bg-gradient-to-r from-accent/15 to-accent/10 text-primary font-semibold glass-button' 
+                          : 'text-secondary hover:bg-white/40 glass-button'
                   }`}
                 >
                   {day}
-                  {/* Entry indicator */}
-                  {hasEntry && (
-                    <div className="absolute top-1 right-1 w-3 h-3 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full"></div>
-                  )}
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Entry Preview */}
-        {selectedEntry ? (
-          <div className="glass p-6 rounded-3xl shadow-xl">
-            <div className="flex items-center space-x-3 mb-4">
-              <Heart className="w-5 h-5 text-purple-600" />
-              <h3 className="text-xl text-slate-800 font-bold">
-                {new Date(selectedEntry.date).toLocaleDateString('en-US', { 
+        {/* Entry Cards using EntryCard component */}
+        {selectedEntries.length > 0 ? (
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex items-center space-x-2 sm:space-x-3 mb-4">
+              <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+              <h3 className="font-italiana text-lg sm:text-xl text-primary">
+                {new Date(selectedEntries[0].date).toLocaleDateString('en-US', { 
                   month: 'long', 
                   day: 'numeric',
                   year: 'numeric'
                 })}
+                {selectedEntries.length > 1 && (
+                  <span className="text-sm text-secondary ml-2">
+                    ({selectedEntries.length} entries)
+                  </span>
+                )}
               </h3>
             </div>
-            <div className="mb-4 relative">
-              <Image 
-                src={selectedEntry.photo_url} 
-                alt="Entry photo"
-                width={400}
-                height={192}
-                className="w-full h-48 object-cover rounded-2xl shadow-lg"
+            
+            {selectedEntries.map((entry) => (
+              <EntryCard 
+                key={entry.id} 
+                entry={entry} 
+                isMultiple={selectedEntries.length > 1}
               />
-              <div className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm rounded-full p-2">
-                <ImageIcon className="w-4 h-4 text-slate-600" />
-              </div>
-            </div>
-            <p className="text-lg text-slate-700 italic leading-relaxed mb-4">
-              &ldquo;{selectedEntry.caption}&rdquo;
-            </p>
-            <div className="flex items-center space-x-2 text-sm text-slate-500">
-              <Clock className="w-4 h-4" />
-              <span>
-                Added at {new Date(selectedEntry.timestamp).toLocaleTimeString('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit'
-                })}
-              </span>
-            </div>
+            ))}
           </div>
         ) : entries.length > 0 ? (
-          <div className="glass p-8 text-center rounded-3xl shadow-xl">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-              <CalendarIcon className="w-8 h-8 text-purple-600" />
+          <div className="card-modern p-6 sm:p-8 text-center">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+              <CalendarIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
             </div>
-            <p className="text-lg text-slate-700 font-medium mb-2">
+            <p className="text-base sm:text-lg text-primary font-medium mb-1 sm:mb-2">
               Select a date with an entry to view it
             </p>
-            <p className="text-sm text-slate-500">
+            <p className="text-xs sm:text-sm text-secondary">
               Dates with entries are highlighted
             </p>
           </div>
         ) : (
-          <div className="glass p-8 text-center rounded-3xl shadow-xl">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-purple-600" />
+          <div className="card-modern p-6 sm:p-8 text-center">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+              <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
             </div>
-            <h3 className="text-xl text-slate-800 font-bold mb-2">No Entries Yet</h3>
-            <p className="text-lg text-slate-600">
+            <h3 className="font-italiana text-lg sm:text-xl text-primary mb-2">No Entries Yet</h3>
+            <p className="text-sm sm:text-base md:text-lg text-secondary">
               Start your daily ritual to see your reflections here
             </p>
           </div>

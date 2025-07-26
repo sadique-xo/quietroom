@@ -13,8 +13,13 @@ async function testImageUpload() {
   console.log('Testing image upload to Supabase Storage...');
   
   try {
-    // Test uploading a base64 image
-    const uploadResult = await uploadImage(userId, sampleBase64Image, 'test-image.png');
+    // Convert base64 to File object
+    const base64Data = sampleBase64Image.split(',')[1];
+    const binaryData = Buffer.from(base64Data, 'base64');
+    const testImageFile = new File([binaryData], 'test-image.png', { type: 'image/png' });
+    
+    // Test uploading the File object
+    const uploadResult = await uploadImage(userId, testImageFile, 'test-image.png');
     
     console.log('Upload result:', uploadResult);
     

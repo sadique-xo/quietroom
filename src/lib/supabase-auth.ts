@@ -73,7 +73,7 @@ export function useSupabaseClient() {
           });
           
           // Store the auth header for debugging access
-          (client as any).headers = {
+          (client as unknown as { headers?: Record<string, string> }).headers = {
             Authorization: `Bearer ${token}`,
           };
           

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useUser, useAuth } from "@clerk/nextjs";
 import { useSupabaseClient } from "@/lib/supabase-auth";
 
@@ -25,7 +26,7 @@ export default function TestAuthPage() {
         setToken(jwt ? jwt.substring(0, 20) + "..." : "No token");
 
         // Test 2: Try to query the entries table with RLS
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("entries")
           .select("*")
           .limit(1);
@@ -81,9 +82,9 @@ export default function TestAuthPage() {
         </div>
 
         <div className="text-center mt-8">
-          <a href="/" className="glass-button px-6 py-3 rounded-xl hover:scale-105 transition-all duration-300">
+          <Link href="/" className="glass-button px-6 py-3 rounded-xl hover:scale-105 transition-all duration-300">
             Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     </div>

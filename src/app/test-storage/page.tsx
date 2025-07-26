@@ -83,7 +83,7 @@ export default function TestStoragePage() {
         log(`   - role: ${payload.role || 'MISSING'}`);
         log(`   - aud: ${payload.aud || 'MISSING'}`);
         log(`   - iss: ${payload.iss || 'MISSING'}`);
-      } catch (e) {
+      } catch {
         log("❌ Error parsing JWT payload");
       }
     } catch (error) {
@@ -141,7 +141,7 @@ export default function TestStoragePage() {
       log("Testing direct storage upload...");
       const testFilePath = `${user.id}/test-image.png`;
       
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('journal-entries')
         .upload(testFilePath, testImageData, {
           contentType: 'image/png',
@@ -223,7 +223,7 @@ export default function TestStoragePage() {
 
       log(`📤 Testing upload to: ${testPath}`);
 
-      const { data: uploadData, error: uploadError } = await testClient.storage
+      const { error: uploadError } = await testClient.storage
         .from('journal-entries')
         .upload(testPath, testData, {
           contentType: 'image/png',
@@ -239,7 +239,7 @@ export default function TestStoragePage() {
         log("✅ Upload successful!");
         
         // Test download
-        const { data: downloadData, error: downloadError } = await testClient.storage
+        const { error: downloadError } = await testClient.storage
           .from('journal-entries')
           .download(testPath);
           
