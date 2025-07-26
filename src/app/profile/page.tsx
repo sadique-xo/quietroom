@@ -1,9 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { EntryStorage, Entry } from "@/lib/storage";
+import Image from "next/image";
+import { SupabaseEntryStorage, Entry } from "@/lib/supabase-storage";
+import { useUser, useClerk, SignOutButton } from "@clerk/nextjs";
+import { 
+  User, 
+  BookOpen, 
+  Flame, 
+  Trophy, 
+  MessageSquare, 
+  Download, 
+  Trash2, 
+  LogOut,
+  Settings,
+  Bell,
+  Volume2,
+  Heart
+} from "lucide-react";
 
 export default function ProfilePage() {
+  const { user, isLoaded } = useUser();
+  const clerk = useClerk();
   const [, setEntries] = useState<Entry[]>([]);
   const [stats, setStats] = useState({
     totalEntries: 0,
@@ -13,10 +31,18 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    const loadedEntries = EntryStorage.getEntries();
-    setEntries(loadedEntries);
-    calculateStats(loadedEntries);
-  }, []);
+    const loadEntries = async () => {
+      if (!user?.id) return;
+      
+      const loadedEntries = await SupabaseEntryStorage.getEntries(user.id);
+      setEntries(loadedEntries);
+      calculateStats(loadedEntries);
+    };
+
+    if (isLoaded && user) {
+      loadEntries();
+    }
+  }, [user?.id, isLoaded, user]);
 
   const calculateStats = (entriesData: Entry[]) => {
     if (entriesData.length === 0) {
@@ -106,9 +132,11 @@ export default function ProfilePage() {
     });
   };
 
-  const handleExportData = () => {
+  const handleExportData = async () => {
     try {
-      const exportData = EntryStorage.exportEntries();
+      if (!user?.id) return;
+      
+      const exportData = await SupabaseEntryStorage.exportEntries(user.id);
       const blob = new Blob([exportData], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -121,8 +149,11 @@ export default function ProfilePage() {
 
       // Show success message
       const successMessage = document.createElement('div');
-      successMessage.className = 'fixed top-8 left-1/2 transform -translate-x-1/2 z-toast glass px-6 py-3 text-sanctuary-navy font-medium';
-      successMessage.textContent = 'Entries exported successfully ✨';
+      successMessage.className = 'fixed top-8 left-1/2 transform -translate-x-1/2 z-toast glass px-6 py-3 text-slate-800 font-medium rounded-2xl shadow-xl flex items-center space-x-2';
+      successMessage.innerHTML = `
+        <Sparkles className="w-5 h-5 text-purple-600" />
+        <span>Entries exported successfully ✨</span>
+      `;
       document.body.appendChild(successMessage);
 
       setTimeout(() => {
@@ -134,13 +165,13 @@ export default function ProfilePage() {
     }
   };
 
-  const handleResetData = () => {
+  const handleResetData = async () => {
     const confirmed = window.confirm(
       'Are you sure you want to delete all your entries? This action cannot be undone.'
     );
     
-    if (confirmed) {
-      const success = EntryStorage.clearAllEntries();
+    if (confirmed && user?.id) {
+      const success = await SupabaseEntryStorage.clearAllEntries(user.id);
       if (success) {
         setEntries([]);
         setStats({
@@ -152,8 +183,11 @@ export default function ProfilePage() {
 
         // Show success message
         const successMessage = document.createElement('div');
-        successMessage.className = 'fixed top-8 left-1/2 transform -translate-x-1/2 z-toast glass px-6 py-3 text-sanctuary-navy font-medium';
-        successMessage.textContent = 'All data cleared ✨';
+        successMessage.className = 'fixed top-8 left-1/2 transform -translate-x-1/2 z-toast glass px-6 py-3 text-slate-800 font-medium rounded-2xl shadow-xl flex items-center space-x-2';
+        successMessage.innerHTML = `
+          <Sparkles className="w-5 h-5 text-purple-600" />
+          <span>All data cleared ✨</span>
+        `;
         document.body.appendChild(successMessage);
 
         setTimeout(() => {
@@ -166,89 +200,214 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sanctuary-lavender/20 to-sanctuary-white">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
       <div className="mobile-container tablet-container desktop-container pt-8">
-        <div className="mb-8">
-          <h1 className="text-display-medium text-sanctuary-navy mb-2">
-            Profile
-          </h1>
-          <p className="text-body-medium text-sanctuary-sage">
-            Your sanctuary statistics and settings
-          </p>
+        {/* Profile Header */}
+        <div className="glass p-8 mb-8 rounded-3xl shadow-xl">
+          <div className="flex items-center space-x-6">
+            {/* Profile Picture */}
+            <div className="relative">
+              {user?.imageUrl ? (
+                <Image
+                  src={user.imageUrl}
+                  alt="Profile picture"
+                  width={80}
+                  height={80}
+                  className="w-20 h-20 rounded-full object-cover ring-4 ring-purple-100 shadow-lg"
+                  onError={(e) => {
+                    // Fallback to default avatar if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center ring-4 ring-purple-100 shadow-lg ${user?.imageUrl ? 'hidden' : ''}`}>
+                <User className="w-10 h-10 text-purple-600" />
+              </div>
+            </div>
+            
+            {/* Profile Info */}
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+                {user?.firstName && user?.lastName 
+                  ? `${user.firstName} ${user.lastName}` 
+                  : user?.fullName || 'Profile'
+                }
+              </h1>
+              <p className="text-lg text-slate-600 mb-2">
+                {user?.primaryEmailAddress?.emailAddress || 'Your sanctuary statistics and settings'}
+              </p>
+              <p className="text-sm text-slate-500">
+                Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { 
+                  month: 'long', 
+                  year: 'numeric' 
+                }) : 'Recently'}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Stats Overview */}
         <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="glass p-6 text-center">
-            <div className="text-display-medium text-sanctuary-navy font-bold mb-2">
+          <div className="glass p-6 text-center rounded-3xl shadow-xl">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-purple-600" />
+            </div>
+            <div className="text-2xl text-slate-800 font-bold mb-2">
               {stats.totalEntries}
             </div>
-            <p className="text-body-medium text-sanctuary-sage">Total Entries</p>
+            <p className="text-sm text-slate-600 font-medium">Total Entries</p>
           </div>
-          <div className="glass p-6 text-center">
-            <div className="text-display-medium text-sanctuary-navy font-bold mb-2">
+          <div className="glass p-6 text-center rounded-3xl shadow-xl">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+              <Flame className="w-6 h-6 text-purple-600" />
+            </div>
+            <div className="text-2xl text-slate-800 font-bold mb-2">
               {stats.currentStreak}
             </div>
-            <p className="text-body-medium text-sanctuary-sage">Current Streak</p>
+            <p className="text-sm text-slate-600 font-medium">Current Streak</p>
           </div>
-          <div className="glass p-6 text-center">
-            <div className="text-display-medium text-sanctuary-navy font-bold mb-2">
+          <div className="glass p-6 text-center rounded-3xl shadow-xl">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+              <Trophy className="w-6 h-6 text-purple-600" />
+            </div>
+            <div className="text-2xl text-slate-800 font-bold mb-2">
               {stats.longestStreak}
             </div>
-            <p className="text-body-medium text-sanctuary-sage">Longest Streak</p>
+            <p className="text-sm text-slate-600 font-medium">Longest Streak</p>
           </div>
-          <div className="glass p-6 text-center">
-            <div className="text-display-medium text-sanctuary-navy font-bold mb-2">
+          <div className="glass p-6 text-center rounded-3xl shadow-xl">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+              <MessageSquare className="w-6 h-6 text-purple-600" />
+            </div>
+            <div className="text-2xl text-slate-800 font-bold mb-2">
               {stats.averageWordsPerEntry}
             </div>
-            <p className="text-body-medium text-sanctuary-sage">Avg Words</p>
+            <p className="text-sm text-slate-600 font-medium">Avg Words</p>
           </div>
         </div>
 
-        {/* Settings */}
-        <div className="glass p-6 mb-6">
-          <h2 className="text-body-large text-sanctuary-navy mb-6">Settings</h2>
+        {/* Profile Management */}
+        <div className="glass p-6 mb-6 rounded-3xl shadow-xl">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+              <User className="w-5 h-5 text-purple-600" />
+            </div>
+            <h2 className="text-xl text-slate-800 font-bold">Profile Management</h2>
+          </div>
           
           <div className="space-y-4">
+            <p className="text-slate-600 mb-4">
+              Manage your profile picture, name, and account settings using Clerk's secure profile management.
+            </p>
+            <button 
+              onClick={() => {
+                // Open Clerk's UserProfile modal
+                clerk.openUserProfile();
+              }}
+              className="w-full glass-button p-4 text-lg text-slate-800 font-semibold rounded-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2"
+            >
+              <Settings className="w-5 h-5" />
+              <span>Manage Profile & Security</span>
+            </button>
+          </div>
+        </div>
+
+        {/* App Settings */}
+        <div className="glass p-6 mb-6 rounded-3xl shadow-xl">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+              <Settings className="w-5 h-5 text-purple-600" />
+            </div>
+            <h2 className="text-xl text-slate-800 font-bold">App Settings</h2>
+          </div>
+          
+          <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <span className="text-body-medium text-sanctuary-navy">Daily Reminders</span>
-              <div className="w-12 h-6 bg-sanctuary-lavender/20 rounded-full relative cursor-pointer">
-                <div className="w-5 h-5 bg-sanctuary-lavender rounded-full absolute top-0.5 right-0.5 transition-transform"></div>
+              <div className="flex items-center space-x-3">
+                <Bell className="w-5 h-5 text-purple-600" />
+                <span className="text-lg text-slate-700 font-medium">Daily Reminders</span>
+              </div>
+              <div className="w-12 h-6 bg-purple-200 rounded-full relative cursor-pointer">
+                <div className="w-5 h-5 bg-purple-600 rounded-full absolute top-0.5 right-0.5 transition-transform"></div>
               </div>
             </div>
             
             <div className="flex items-center justify-between">
-              <span className="text-body-medium text-sanctuary-navy">Quiet Room Sounds</span>
-              <div className="w-12 h-6 bg-sanctuary-sage/20 rounded-full relative cursor-pointer">
-                <div className="w-5 h-5 bg-sanctuary-sage rounded-full absolute top-0.5 left-0.5 transition-transform"></div>
+              <div className="flex items-center space-x-3">
+                <Volume2 className="w-5 h-5 text-purple-600" />
+                <span className="text-lg text-slate-700 font-medium">Quiet Room Sounds</span>
+              </div>
+              <div className="w-12 h-6 bg-slate-200 rounded-full relative cursor-pointer">
+                <div className="w-5 h-5 bg-slate-400 rounded-full absolute top-0.5 left-0.5 transition-transform"></div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Export & Reset */}
-        <div className="space-y-4">
+        <div className="space-y-4 mb-6">
           <button 
             onClick={handleExportData}
-            className="w-full glass-button p-4 text-body-medium text-sanctuary-navy font-medium"
+            className="w-full glass-button p-4 text-lg text-slate-800 font-semibold rounded-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2"
           >
-            Export My Data ({stats.totalEntries} {stats.totalEntries === 1 ? 'entry' : 'entries'})
+            <Download className="w-5 h-5" />
+            <span>Export My Data ({stats.totalEntries} {stats.totalEntries === 1 ? 'entry' : 'entries'})</span>
           </button>
           
           <button 
             onClick={handleResetData}
-            className="w-full glass-button p-4 text-body-medium text-red-600 font-medium border-red-200"
+            className="w-full glass-button p-4 text-lg text-red-600 font-semibold rounded-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 border-red-200"
           >
-            Reset All Data
+            <Trash2 className="w-5 h-5" />
+            <span>Reset All Data</span>
           </button>
         </div>
 
+        {/* User Info */}
+        {user && (
+          <div className="glass p-6 mb-6 rounded-3xl shadow-xl">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+                <User className="w-5 h-5 text-purple-600" />
+              </div>
+              <h2 className="text-xl text-slate-800 font-bold">Account</h2>
+            </div>
+            <div className="flex items-center space-x-4 mb-6">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+                <span className="text-2xl text-purple-600 font-bold">
+                  {user.firstName?.charAt(0) || user.emailAddresses[0]?.emailAddress.charAt(0) || 'U'}
+                </span>
+              </div>
+              <div>
+                <p className="text-lg text-slate-800 font-semibold">
+                  {user.firstName || 'User'}
+                </p>
+                <p className="text-sm text-slate-600">
+                  {user.emailAddresses[0]?.emailAddress}
+                </p>
+              </div>
+            </div>
+            <SignOutButton>
+              <button className="w-full glass-button p-4 text-lg text-red-600 font-semibold rounded-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 border-red-200">
+                <LogOut className="w-5 h-5" />
+                <span>Sign Out</span>
+              </button>
+            </SignOutButton>
+          </div>
+        )}
+
         {/* App Info */}
         <div className="mt-8 text-center">
-          <p className="text-caption text-sanctuary-sage">
-            QuietRoom v1.0.0
-          </p>
-          <p className="text-caption text-sanctuary-sage mt-2">
+          <div className="flex items-center justify-center space-x-2 mb-2">
+            <Heart className="w-4 h-4 text-purple-600" />
+            <p className="text-sm text-slate-600 font-medium">
+              QuietRoom v1.0.0
+            </p>
+          </div>
+          <p className="text-sm text-slate-500">
             Made with intention and care
           </p>
         </div>

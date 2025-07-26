@@ -1,53 +1,202 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { 
+  X, 
+  Play, 
+  Pause, 
+  RotateCcw, 
+  Volume2, 
+  VolumeX,
+  Sparkles,
+  Clock
+} from "lucide-react";
+
 export default function QuietRoomPage() {
+  const [isActive, setIsActive] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes default
+  const [selectedTime, setSelectedTime] = useState(300);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
+
+  const timerOptions = [
+    { value: 300, label: "5 min" },
+    { value: 600, label: "10 min" },
+    { value: 900, label: "15 min" }
+  ];
+
+  useEffect(() => {
+    if (isActive && timeLeft > 0) {
+      intervalRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            setIsActive(false);
+            // Play gentle notification sound if enabled
+            if (isSoundEnabled) {
+              // Could add actual sound here
+              console.log('Session complete');
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isActive, timeLeft, isSoundEnabled]);
+
+  const startTimer = () => {
+    setIsActive(true);
+    setTimeLeft(selectedTime);
+  };
+
+  const pauseTimer = () => {
+    setIsActive(false);
+  };
+
+  const resetTimer = () => {
+    setIsActive(false);
+    setTimeLeft(selectedTime);
+  };
+
+  const selectTime = (seconds: number) => {
+    setSelectedTime(seconds);
+    setTimeLeft(seconds);
+    setIsActive(false);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleClose = () => {
+    if (isActive) {
+      const confirmed = window.confirm('Are you sure you want to leave? Your session will be lost.');
+      if (!confirmed) return;
+    }
+    router.push('/');
+  };
+
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-sanctuary-lavender/30 via-sanctuary-white to-sanctuary-navy/20">
+    <div className="fixed inset-0 bg-gradient-to-br from-purple-50/30 via-white to-blue-50/20">
       {/* Close Button */}
-      <button className="absolute top-8 left-8 z-overlay glass-button p-3 rounded-full">
-        <svg className="w-6 h-6 text-sanctuary-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
+      <button 
+        onClick={handleClose}
+        className="absolute top-8 left-8 z-overlay glass-button p-3 rounded-full hover:scale-105 transition-all duration-300"
+      >
+        <X className="w-6 h-6 text-slate-800" />
       </button>
 
       {/* Breathing Circle */}
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <div className="relative mb-12">
-            <div className="breathing w-32 h-32 mx-auto rounded-full glass border-2 border-sanctuary-lavender/50"></div>
+            <div className={`${isActive ? 'breathing' : ''} w-40 h-40 mx-auto rounded-full glass border-2 border-purple-200/50 transition-all duration-300 shadow-xl`}></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-body-large text-sanctuary-navy font-medium">Breathe</span>
+              <div className="text-center">
+                <Sparkles className={`w-8 h-8 text-purple-600 mx-auto mb-2 ${isActive ? 'animate-pulse' : ''}`} />
+                <span className="text-lg text-slate-800 font-semibold">
+                  {isActive ? 'Breathe' : 'Ready'}
+                </span>
+              </div>
             </div>
           </div>
           
           {/* Timer Display */}
-          <div className="glass p-6 mb-8">
-            <div className="text-display-large text-sanctuary-navy font-bold mb-2">5:00</div>
-            <p className="text-body-medium text-sanctuary-sage">Focus on your breath</p>
+          <div className="glass p-8 mb-8 rounded-3xl shadow-xl">
+            <div className="flex items-center justify-center space-x-3 mb-4">
+              <Clock className="w-8 h-8 text-purple-600" />
+              <div className="text-5xl text-slate-800 font-bold">
+                {formatTime(timeLeft)}
+              </div>
+            </div>
+            <p className="text-lg text-slate-600">
+              {isActive ? 'Focus on your breath' : 'Choose your session length'}
+            </p>
+          </div>
+
+          {/* Timer Selection */}
+          <div className="glass p-6 mb-6 rounded-3xl shadow-xl">
+            <div className="flex items-center justify-center space-x-4">
+              {timerOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => selectTime(option.value)}
+                  className={`glass-button px-6 py-3 text-lg font-medium rounded-2xl transition-all duration-300 ${
+                    selectedTime === option.value 
+                      ? 'text-purple-600 bg-gradient-to-r from-purple-100/50 to-blue-100/50 scale-105' 
+                      : 'text-slate-600 hover:text-slate-800 hover:scale-102'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Control Panel */}
-          <div className="glass p-4">
-            <div className="flex items-center justify-center space-x-4 mb-6">
-              <button className="glass-button px-4 py-2 text-body-medium text-sanctuary-sage">5 min</button>
-              <button className="glass-button px-4 py-2 text-body-medium text-sanctuary-navy font-medium bg-sanctuary-lavender/20">10 min</button>
-              <button className="glass-button px-4 py-2 text-body-medium text-sanctuary-sage">15 min</button>
+          <div className="glass p-6 rounded-3xl shadow-xl">
+            <div className="flex items-center justify-center space-x-6 mb-6">
+              {/* Sound Toggle */}
+              <button 
+                onClick={() => setIsSoundEnabled(!isSoundEnabled)}
+                className={`glass-button p-4 rounded-full transition-all duration-300 hover:scale-105 ${
+                  isSoundEnabled ? 'bg-gradient-to-r from-purple-100/50 to-blue-100/50' : ''
+                }`}
+              >
+                {isSoundEnabled ? (
+                  <Volume2 className="w-6 h-6 text-purple-600" />
+                ) : (
+                  <VolumeX className="w-6 h-6 text-slate-600" />
+                )}
+              </button>
+
+              {/* Main Control Button */}
+              <button 
+                onClick={isActive ? pauseTimer : startTimer}
+                disabled={timeLeft === 0}
+                className={`glass-button p-8 rounded-full transition-all duration-300 ${
+                  isActive ? 'bg-gradient-to-r from-purple-100/50 to-blue-100/50' : 'bg-gradient-to-r from-purple-50/50 to-blue-50/50'
+                } ${timeLeft === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'}`}
+              >
+                {isActive ? (
+                  <Pause className="w-10 h-10 text-purple-600" />
+                ) : (
+                  <Play className="w-10 h-10 text-purple-600 ml-1" />
+                )}
+              </button>
+
+              {/* Reset Button */}
+              <button 
+                onClick={resetTimer}
+                className="glass-button p-4 rounded-full transition-all duration-300 hover:scale-105"
+              >
+                <RotateCcw className="w-6 h-6 text-slate-600" />
+              </button>
             </div>
-            
-            <div className="flex items-center justify-center space-x-6">
-              <button className="glass-button p-4 rounded-full">
-                <svg className="w-6 h-6 text-sanctuary-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M12 5.5c-3.3 0-6 2.7-6 6v6c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-6c0-3.3-2.7-6-6-6z" />
-                </svg>
-              </button>
-              <button className="glass-button p-6 rounded-full bg-sanctuary-lavender/20">
-                <svg className="w-8 h-8 text-sanctuary-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M12 5.5c-3.3 0-6 2.7-6 6v6c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-6c0-3.3-2.7-6-6-6z" />
-                </svg>
-              </button>
-              <button className="glass-button p-4 rounded-full">
-                <svg className="w-6 h-6 text-sanctuary-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-                </svg>
-              </button>
+
+            {/* Status Text */}
+            <div className="text-center">
+              <p className="text-base text-slate-600 font-medium">
+                {isActive ? 'Session in progress...' : 'Ready to begin your quiet time'}
+              </p>
+              {isSoundEnabled && (
+                <p className="text-sm text-slate-500 mt-2 flex items-center justify-center space-x-1">
+                  <Volume2 className="w-4 h-4" />
+                  <span>Ambient sounds enabled</span>
+                </p>
+              )}
             </div>
           </div>
         </div>
