@@ -167,27 +167,31 @@ export default function NewEntryPage() {
 
   return (
     <div className="min-h-dvh">
-      <div className="mobile-container tablet-container desktop-container pt-safe-top pt-6 sm:pt-8">
-        {/* Mobile-optimized Header with logo */}
-        <div className="flex items-center justify-center mb-6 sm:mb-8">
-          <div className="nav-glass px-4 sm:px-6 py-2.5 sm:py-3 flex items-center space-x-2 sm:space-x-3 rounded-[16px] sm:rounded-[20px]">
-            <Image
-              src="/images/Icon v3.webp"
-              alt="QuietRoom Icon"
-              width={20}
-              height={20}
-              className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg"
-            />
-            <Image
-              src="/images/Website Logo.webp"
-              alt="QuietRoom"
-              width={80}
-              height={16}
-              className="h-3.5 sm:h-5 w-auto"
-            />
-          </div>
+      {/* Floating Header with logo - fixed position and spacing */}
+      <div className="w-full flex justify-center pt-safe-top pt-4 sm:pt-6">
+        <div 
+          className="px-4 sm:px-6 py-3 sm:py-4 rounded-[20px] sm:rounded-[24px] flex items-center space-x-3 sm:space-x-4 animate-gentle-fade nav-glass"
+        >
+          <Image
+            src="/images/Icon v3.webp"
+            alt="QuietRoom Icon"
+            width={36}
+            height={36}
+            className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg"
+            priority
+          />
+          <Image
+            src="/images/Website Logo.webp"
+            alt="QuietRoom"
+            width={140}
+            height={28}
+            className="h-6 sm:h-8 w-auto"
+            priority
+          />
         </div>
+      </div>
 
+      <div className="mobile-container tablet-container desktop-container pt-6 sm:pt-10">
         {/* Mobile-first Header */}
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-start sm:justify-between sm:space-y-0 mb-6 sm:mb-8">
           <div className="space-y-1 sm:space-y-2">
@@ -281,7 +285,7 @@ export default function NewEntryPage() {
             <textarea
               value={caption}
               onChange={handleCaptionChange}
-              className="glass-input w-full p-3 sm:p-4 text-base sm:text-lg placeholder-secondary/60 resize-none rounded-xl"
+              className="glass-input w-full p-4 sm:p-5 text-base sm:text-lg placeholder-secondary/60 resize-none min-h-[120px] sm:min-h-[140px]"
               placeholder="What does this moment mean to you?"
               rows={4}
             />

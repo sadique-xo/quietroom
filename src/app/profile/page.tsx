@@ -70,24 +70,37 @@ export default function ProfilePage() {
     const hasToday = entriesData.some(e => e.date === todayString);
     const hasYesterday = entriesData.some(e => e.date === yesterdayString);
     
+    // Set initial streak value
+    let skipConsecutiveCheck = false;
     if (hasToday) {
+      // If there's an entry for today, streak is at least 1
       currentStreak = 1;
+      // Check for consecutive days before today
       checkDate = new Date(today.getTime() - 24 * 60 * 60 * 1000);
     } else if (hasYesterday) {
+      // If no entry for today but there is for yesterday, streak is 1 but broken today
       currentStreak = 1;
+      // Check for consecutive days before yesterday
       checkDate = new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000);
+    } else {
+      // No entries for today or yesterday, no current streak
+      currentStreak = 0;
+      skipConsecutiveCheck = true;
     }
 
-    // Count backwards from check date
-    while (currentStreak > 0) {
-      const checkDateString = checkDate.toISOString().split('T')[0];
-      const hasEntry = entriesData.some(e => e.date === checkDateString);
-      
-      if (hasEntry) {
-        currentStreak++;
-        checkDate = new Date(checkDate.getTime() - 24 * 60 * 60 * 1000);
-      } else {
-        break;
+    // Count backwards from check date to find consecutive days
+    if (!skipConsecutiveCheck) {
+      let keepChecking = true;
+      while (keepChecking) {
+        const checkDateString = checkDate.toISOString().split('T')[0];
+        const hasEntry = entriesData.some(e => e.date === checkDateString);
+        
+        if (hasEntry) {
+          currentStreak++;
+          checkDate = new Date(checkDate.getTime() - 24 * 60 * 60 * 1000);
+        } else {
+          keepChecking = false;
+        }
       }
     }
 
@@ -124,7 +137,7 @@ export default function ProfilePage() {
 
     setStats({
       totalEntries: entriesData.length,
-      currentStreak: Math.max(0, currentStreak - 1), // Subtract 1 since we started at 1
+      currentStreak: currentStreak, // Don't subtract 1 - if today is day 1, show 1
       longestStreak,
       averageWordsPerEntry: averageWords
     });
