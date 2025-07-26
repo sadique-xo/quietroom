@@ -89,6 +89,15 @@ export default function BottomNavigation() {
                 if (fallback) fallback.style.display = 'block';
               }}
             />
+            {/* Fallback User icon if image fails to load */}
+            <User 
+              className={`absolute inset-0 w-6 h-6 sm:w-7 sm:h-7 text-secondary transition-all duration-200 ${
+                isActive 
+                  ? "text-primary stroke-[2.5px]" 
+                  : "text-secondary stroke-[2px]"
+              }`}
+              style={{ display: 'none' }}
+            />
           </div>
         ) : (
           <IconComponent 
