@@ -1,7 +1,7 @@
 {
   "name": "QuietRoom - Digital Sanctuary",
   "short_name": "QuietRoom",
-  "description": "One sacred photo, one reflection, one silent moment—every day.",
+  "description": "A mindful digital sanctuary for daily reflection. Capture one sacred photo, write one reflection, and experience one silent moment—every day.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#E6E6FA",
