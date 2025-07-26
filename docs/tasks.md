@@ -148,3 +148,6 @@ Simplify your mind. Remember what matters. Slow down.
 - Implement `/`, `/new`, `/room`, `/calendar`, `/profile` screens  
 - Add email-based authentication (Clerk/Auth.js/Firebase)  
 - Review with beta testers, refine based on emotion + clarity
+
+
+Done
