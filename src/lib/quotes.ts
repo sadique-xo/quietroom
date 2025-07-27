@@ -79,15 +79,101 @@ export const quotes: Quote[] = [
     text: "Let go of what has passed. Let go of what may come. Let go of what is happening now.",
     author: "Rumi",
     category: "mindfulness"
+  },
+  // 15 new quotes added
+  {
+    text: "Every moment is a fresh beginning.",
+    author: "T.S. Eliot",
+    category: "presence"
+  },
+  {
+    text: "The only way to do great work is to love what you do.",
+    author: "Steve Jobs",
+    category: "wisdom"
+  },
+  {
+    text: "Listen to the silence, it has much to say.",
+    author: "Rumi",
+    category: "reflection"
+  },
+  {
+    text: "Simplicity is the ultimate sophistication.",
+    author: "Leonardo da Vinci",
+    category: "wisdom"
+  },
+  {
+    text: "The earth has music for those who listen.",
+    author: "George Santayana",
+    category: "nature"
+  },
+  {
+    text: "Be the change you wish to see in the world.",
+    author: "Mahatma Gandhi",
+    category: "presence"
+  },
+  {
+    text: "In stillness, the world restores and renews.",
+    author: "Anonymous",
+    category: "mindfulness"
+  },
+  {
+    text: "The journey of a thousand miles begins with one step.",
+    author: "Lao Tzu",
+    category: "wisdom"
+  },
+  {
+    text: "Look deep into nature, and then you will understand everything better.",
+    author: "Albert Einstein",
+    category: "nature"
+  },
+  {
+    text: "What you seek is seeking you.",
+    author: "Rumi",
+    category: "reflection"
+  },
+  {
+    text: "The only constant in life is change.",
+    author: "Heraclitus",
+    category: "wisdom"
+  },
+  {
+    text: "Find peace in the present moment.",
+    author: "Anonymous",
+    category: "mindfulness"
+  },
+  {
+    text: "The soul always knows what to do to heal itself.",
+    author: "Caroline Myss",
+    category: "reflection"
+  },
+  {
+    text: "Gratitude turns what we have into enough.",
+    author: "Anonymous",
+    category: "presence"
+  },
+  {
+    text: "The mountains are calling and I must go.",
+    author: "John Muir",
+    category: "nature"
+  },
+  {
+    text: "Wisdom comes from experience, and experience comes from mistakes.",
+    author: "Anonymous",
+    category: "wisdom"
+  },
+  {
+    text: "Breathe deeply and know that you are alive.",
+    author: "Anonymous",
+    category: "mindfulness"
   }
 ];
 
 export class QuoteService {
-  static getDailyQuote(): Quote {
-    // Use current date as seed to ensure same quote per day
-    const today = new Date();
-    const dateString = today.toDateString();
-    const seed = this.hashCode(dateString);
+  static getHourlyQuote(): Quote {
+    // Use current date and hour as seed to ensure same quote per hour
+    const now = new Date();
+    const dateHourString = `${now.toDateString()}-${now.getHours()}`;
+    const seed = this.hashCode(dateHourString);
     const index = Math.abs(seed) % quotes.length;
     return quotes[index];
   }
@@ -101,7 +187,7 @@ export class QuoteService {
     return quotes.filter(quote => quote.category === category);
   }
 
-  // Simple hash function for consistent daily quotes
+  // Simple hash function for consistent hourly quotes
   private static hashCode(str: string): number {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {

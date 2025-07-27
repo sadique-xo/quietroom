@@ -22,11 +22,11 @@ export default function HomePage() {
   const { supabase, isLoading: isSupabaseLoading } = useSupabaseClient();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [entriesByDate, setEntriesByDate] = useState<Record<string, Entry[]>>({});
-  const [dailyQuote, setDailyQuote] = useState<Quote | null>(null);
+  const [hourlyQuote, setHourlyQuote] = useState<Quote | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load entries and daily quote
+    // Load entries and hourly quote
     const loadData = async () => {
       if (!user?.id || isSupabaseLoading) {
         setIsLoading(false);
@@ -61,7 +61,7 @@ export default function HomePage() {
         
         setEntries(userEntries);
         setEntriesByDate(grouped);
-        setDailyQuote(QuoteService.getDailyQuote());
+        setHourlyQuote(QuoteService.getHourlyQuote());
         setIsLoading(false);
       } catch (error) {
         console.error('Error loading data:', error);
@@ -157,14 +157,14 @@ export default function HomePage() {
             <h1 className="font-italiana text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-4 sm:mb-6 text-primary">
               Welcome to Your Sanctuary
             </h1>
-            {dailyQuote && (
+            {hourlyQuote && (
               <>
                 <p className="text-sm sm:text-base md:text-lg text-secondary mb-3 sm:mb-4 italic leading-relaxed">
-                  &ldquo;{dailyQuote.text}&rdquo;
+                  &ldquo;{hourlyQuote.text}&rdquo;
                 </p>
                 <p className="text-xs sm:text-sm text-secondary font-medium flex items-center justify-center space-x-1 sm:space-x-2">
                   <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>— {dailyQuote.author}</span>
+                  <span>— {hourlyQuote.author}</span>
                 </p>
               </>
             )}
