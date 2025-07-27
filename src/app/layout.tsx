@@ -6,7 +6,7 @@ import { inter, urbanist } from '@/lib/fonts';
 
 export const metadata: Metadata = {
   title: "QuietRoom - Digital Sanctuary",
-  description: "A mindful digital sanctuary for daily reflection. Capture one sacred photo, write one reflection, and experience one silent moment—every day.",
+  description: "A mindful digital sanctuary for daily reflection. Capture sacred moments, write reflections, and experience silent moments—every day.",
   icons: {
     icon: '/images/Icon v3.webp',
     apple: '/images/Icon v3.webp',
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://room.sadique.co'),
   openGraph: {
     title: 'QuietRoom - Digital Sanctuary',
-    description: 'A mindful digital sanctuary for daily reflection. Capture one sacred photo, write one reflection, and experience one silent moment—every day.',
+    description: 'A mindful digital sanctuary for daily reflection. Capture sacred moments, write reflections, and experience silent moments—every day.',
     url: 'https://room.sadique.co',
     siteName: 'QuietRoom',
     images: [
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'QuietRoom - Digital Sanctuary',
-    description: 'A mindful digital sanctuary for daily reflection. Capture one sacred photo, write one reflection, and experience one silent moment—every day.',
+    description: 'A mindful digital sanctuary for daily reflection. Capture sacred moments, write reflections, and experience silent moments—every day.',
     images: ['/images/Social_Image.webp'],
     creator: '@sadique_xo',
   },
